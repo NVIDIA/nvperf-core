@@ -1,0 +1,4001 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2014-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef NVPERF_HOST_IMPL_H
+#define NVPERF_HOST_IMPL_H
+
+#include <stdlib.h>
+#include <string.h>
+
+#if _WIN32
+#include <wchar.h>
+#include <Windows.h>
+#else
+#include <dlfcn.h>
+#endif
+
+#if defined(__cplusplus)
+    #define NVPERF_HOST_IMPL_FN                  inline
+    #define NVPERF_HOST_IMPL_FN_EMITTED_IF_USED  1
+#elif defined(_MSC_VER)
+    #define NVPERF_HOST_IMPL_FN                  __inline
+    #define NVPERF_HOST_IMPL_FN_EMITTED_IF_USED  1
+#elif defined(__GNUC__)
+    #define NVPERF_HOST_IMPL_FN                  __attribute__((weak))
+    #define NVPERF_HOST_IMPL_FN_EMITTED_IF_USED  0
+#else
+    #define NVPERF_HOST_IMPL_FN
+    #define NVPERF_HOST_IMPL_FN_EMITTED_IF_USED  0
+#endif
+
+#if defined(_MSC_VER)
+    #define NVPERF_HOST_IMPL_DATA                __declspec(selectany)
+    #define NVPERF_HOST_IMPL_DATA_LINK_ONCE      1
+#elif defined(__GNUC__)
+    #define NVPERF_HOST_IMPL_DATA                __attribute__((weak))
+    #define NVPERF_HOST_IMPL_DATA_LINK_ONCE      1
+#else
+    #define NVPERF_HOST_IMPL_DATA                static
+    #define NVPERF_HOST_IMPL_DATA_LINK_ONCE      0
+#endif
+
+#if !defined(NVPERF_HOST_IMPL_HIDE_SYMBOLS)
+    #if defined(__GNUC__)
+        #define NVPERF_HOST_IMPL_HIDE_SYMBOLS 1
+    #else
+        #define NVPERF_HOST_IMPL_HIDE_SYMBOLS 0
+    #endif
+    #define NVPERF_HOST_IMPL_UNDEF_HIDE_SYMBOLS 1
+#endif
+
+#if defined(NVPA_SHARED_LIB) && ( \
+        defined(NVPERF_COMMON_H) || \
+        defined(NVPERF_HOST_H) || \
+        defined(NVPERF_TARGET_H) || \
+        defined(NVPERF_DEVICE_HOST_H) || \
+        defined(NVPERF_DEVICE_TARGET_H) || \
+        defined(NVPERF_VULKAN_HOST_H) || \
+        defined(NVPERF_VULKAN_TARGET_H) || \
+        defined(NVPERF_VULKANSC_HOST_H) || \
+        defined(NVPERF_VULKANSC_TARGET_H) || \
+        defined(NVPERF_OPENGL_HOST_H) || \
+        defined(NVPERF_OPENGL_TARGET_H) || \
+        defined(NVPERF_EGL_HOST_H) || \
+        defined(NVPERF_EGL_TARGET_H))
+    #define NVPERF_HOST_IMPL_API_ALREADY_EXPORTED 1
+#else
+    #define NVPERF_HOST_IMPL_API_ALREADY_EXPORTED 0
+#endif
+
+#if !NVPERF_HOST_IMPL_HIDE_SYMBOLS
+    #define NVPERF_HOST_IMPL_API_VISIBILITY
+#elif NVPERF_HOST_IMPL_API_ALREADY_EXPORTED
+    #define NVPERF_HOST_IMPL_API_VISIBILITY __attribute__((visibility("default")))
+#else
+    #define NVPERF_HOST_IMPL_API_VISIBILITY __attribute__((visibility("hidden")))
+#endif
+
+#if NVPERF_HOST_IMPL_HIDE_SYMBOLS && defined(NVPA_SHARED_LIB)
+    #pragma push_macro("NVPA_SHARED_LIB")
+    #undef NVPA_SHARED_LIB
+    #define NVPERF_HOST_IMPL_RESTORE_NVPA_SHARED_LIB 1
+#endif
+
+#include <nvperf_common.h>
+#include <nvperf_host.h>
+#include <nvperf_target.h>
+#include <nvperf_device_host.h>
+#include <nvperf_device_target.h>
+#include <nvperf_vulkan_host.h>
+#include <nvperf_vulkan_target.h>
+#include <nvperf_vulkansc_host.h>
+#include <nvperf_vulkansc_target.h>
+#include <nvperf_opengl_host.h>
+#include <nvperf_opengl_target.h>
+#include <nvperf_egl_host.h>
+#include <nvperf_egl_target.h>
+
+#if defined(NVPERF_HOST_IMPL_RESTORE_NVPA_SHARED_LIB)
+    #pragma pop_macro("NVPA_SHARED_LIB")
+    #undef NVPERF_HOST_IMPL_RESTORE_NVPA_SHARED_LIB
+#endif
+
+#if NVPERF_HOST_IMPL_HIDE_SYMBOLS
+#pragma GCC visibility push(hidden)
+#endif
+
+#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8)
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+typedef NVPA_GenericFn (*NVPERF_HOST_IMPL_NVPA_GetProcAddress_Fn)(const char* pFunctionName);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPaths_Fn)(NVPW_SetLibraryLoadPaths_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPathsW_Fn)(NVPW_SetLibraryLoadPathsW_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_InitializeHost_Fn)(NVPW_InitializeHost_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GetSupportedChipNames_Fn)(NVPW_GetSupportedChipNames_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_Destroy_Fn)(NVPW_RawMetricsConfig_Destroy_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_SetCounterAvailability_Fn)(NVPW_RawMetricsConfig_SetCounterAvailability_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_BeginPassGroup_Fn)(NVPW_RawMetricsConfig_BeginPassGroup_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_EndPassGroup_Fn)(NVPW_RawMetricsConfig_EndPassGroup_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumMetrics_Fn)(NVPW_RawMetricsConfig_GetNumMetrics_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetMetricProperties_V2_Fn)(NVPW_RawMetricsConfig_GetMetricProperties_V2_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_AddMetrics_Fn)(NVPW_RawMetricsConfig_AddMetrics_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_IsAddMetricsPossible_Fn)(NVPW_RawMetricsConfig_IsAddMetricsPossible_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GenerateConfigImage_Fn)(NVPW_RawMetricsConfig_GenerateConfigImage_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetConfigImage_Fn)(NVPW_RawMetricsConfig_GetConfigImage_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumPasses_V2_Fn)(NVPW_RawMetricsConfig_GetNumPasses_V2_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_RawCounterDomainToString_Fn)(NVPW_RawCounterConfig_RawCounterDomainToString_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_StringToRawCounterDomain_Fn)(NVPW_RawCounterConfig_StringToRawCounterDomain_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetSupportedChipNames_Fn)(NVPW_RawCounterConfig_GetSupportedChipNames_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_Destroy_Fn)(NVPW_RawCounterConfig_Destroy_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_SetCounterAvailability_Fn)(NVPW_RawCounterConfig_SetCounterAvailability_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains_Fn)(NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups_Fn)(NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_IsCooperativeDomainGroup_Fn)(NVPW_RawCounterConfig_IsCooperativeDomainGroup_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains_Fn)(NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_BeginPassGroup_Fn)(NVPW_RawCounterConfig_BeginPassGroup_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_EndPassGroup_Fn)(NVPW_RawCounterConfig_EndPassGroup_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumRawCounters_Fn)(NVPW_RawCounterConfig_GetNumRawCounters_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterName_Fn)(NVPW_RawCounterConfig_GetRawCounterName_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterProperties_Fn)(NVPW_RawCounterConfig_GetRawCounterProperties_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AddRawCounters_Fn)(NVPW_RawCounterConfig_AddRawCounters_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AreRawCountersSchedulable_Fn)(NVPW_RawCounterConfig_AreRawCountersSchedulable_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_MergePassGroups_Fn)(NVPW_RawCounterConfig_MergePassGroups_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GenerateConfigImage_Fn)(NVPW_RawCounterConfig_GenerateConfigImage_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetConfigImage_Fn)(NVPW_RawCounterConfig_GetConfigImage_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumPasses_Fn)(NVPW_RawCounterConfig_GetNumPasses_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Config_GetRawCounterInfo_Fn)(NVPW_Config_GetRawCounterInfo_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Config_GetRawCounters_Fn)(NVPW_Config_GetRawCounters_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Fn)(NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Fn)(NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_Destroy_Fn)(NVPW_MetricsEvaluator_Destroy_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricNames_Fn)(NVPW_MetricsEvaluator_GetMetricNames_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricTypeAndIndex_Fn)(NVPW_MetricsEvaluator_GetMetricTypeAndIndex_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest_Fn)(NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_HwUnitToString_Fn)(NVPW_MetricsEvaluator_HwUnitToString_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetCounterProperties_Fn)(NVPW_MetricsEvaluator_GetCounterProperties_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetRatioMetricProperties_Fn)(NVPW_MetricsEvaluator_GetRatioMetricProperties_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetThroughputMetricProperties_Fn)(NVPW_MetricsEvaluator_GetThroughputMetricProperties_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetSupportedSubmetrics_Fn)(NVPW_MetricsEvaluator_GetSupportedSubmetrics_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricRawDependencies_Fn)(NVPW_MetricsEvaluator_GetMetricRawDependencies_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_DimUnitToString_Fn)(NVPW_MetricsEvaluator_DimUnitToString_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricDimUnits_Fn)(NVPW_MetricsEvaluator_GetMetricDimUnits_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetUserData_Fn)(NVPW_MetricsEvaluator_SetUserData_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_EvaluateToGpuValues_Fn)(NVPW_MetricsEvaluator_EvaluateToGpuValues_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetDeviceAttributes_Fn)(NVPW_MetricsEvaluator_SetDeviceAttributes_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize_Fn)(NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString_Fn)(NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Commit_Fn)(NVPW_MetricsEvaluator_UserDefinedMetrics_Commit_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames_Fn)(NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterData_CalculateCounterDataImageCopySize_Fn)(NVPW_CounterData_CalculateCounterDataImageCopySize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterData_InitializeCounterDataImageCopy_Fn)(NVPW_CounterData_InitializeCounterDataImageCopy_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterData_ExtractCounterDataPrefix_Fn)(NVPW_CounterData_ExtractCounterDataPrefix_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Create_Fn)(NVPW_CounterDataCombiner_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Destroy_Fn)(NVPW_CounterDataCombiner_Destroy_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CreateRange_Fn)(NVPW_CounterDataCombiner_CreateRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CopyIntoRange_Fn)(NVPW_CounterDataCombiner_CopyIntoRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_AccumulateIntoRange_Fn)(NVPW_CounterDataCombiner_AccumulateIntoRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_SumIntoRange_Fn)(NVPW_CounterDataCombiner_SumIntoRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_WeightedSumIntoRange_Fn)(NVPW_CounterDataCombiner_WeightedSumIntoRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Create_Fn)(NVPW_CounterDataBuilder_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Destroy_Fn)(NVPW_CounterDataBuilder_Destroy_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddMetrics_Fn)(NVPW_CounterDataBuilder_AddMetrics_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddRawCounters_Fn)(NVPW_CounterDataBuilder_AddRawCounters_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_GetCounterDataPrefix_Fn)(NVPW_CounterDataBuilder_GetCounterDataPrefix_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_InitializeTarget_Fn)(NVPW_InitializeTarget_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GetDeviceCount_Fn)(NVPW_GetDeviceCount_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Device_GetNames_Fn)(NVPW_Device_GetNames_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Device_GetUUID_Fn)(NVPW_Device_GetUUID_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Device_GetPciBusIds_Fn)(NVPW_Device_GetPciBusIds_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Device_GetMigAttributes_Fn)(NVPW_Device_GetMigAttributes_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Adapter_GetDeviceIndex_Fn)(NVPW_Adapter_GetDeviceIndex_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterData_GetNumRanges_Fn)(NVPW_CounterData_GetNumRanges_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterData_GetChipName_Fn)(NVPW_CounterData_GetChipName_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Config_GetNumPasses_V2_Fn)(NVPW_Config_GetNumPasses_V2_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_QueryVersionNumber_Fn)(NVPW_QueryVersionNumber_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Device_GetClockStatus_Fn)(NVPW_Device_GetClockStatus_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Device_SetClockSetting_Fn)(NVPW_Device_SetClockSetting_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_GetState_Fn)(NVPW_ThrottlingDetector_GetState_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_BeginSession_Fn)(NVPW_ThrottlingDetector_BeginSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_Sample_Fn)(NVPW_ThrottlingDetector_Sample_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_EndSession_Fn)(NVPW_ThrottlingDetector_EndSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_CounterData_GetRangeDescriptions_Fn)(NVPW_CounterData_GetRangeDescriptions_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Profiler_CounterData_GetRangeDescriptions_Fn)(NVPW_Profiler_CounterData_GetRangeDescriptions_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetSampleTime_Fn)(NVPW_PeriodicSampler_CounterData_GetSampleTime_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_TrimInPlace_Fn)(NVPW_PeriodicSampler_CounterData_TrimInPlace_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetInfo_Fn)(NVPW_PeriodicSampler_CounterData_GetInfo_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetTriggerCount_Fn)(NVPW_PeriodicSampler_CounterData_GetTriggerCount_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_IsDataComplete_Fn)(NVPW_PeriodicSampler_CounterData_IsDataComplete_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Device_RawCounterConfig_Create_Fn)(NVPW_Device_RawCounterConfig_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Device_RawMetricsConfig_Create_Fn)(NVPW_Device_RawMetricsConfig_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize_Fn)(NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_Initialize_Fn)(NVPW_Device_MetricsEvaluator_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsGpuSupported_Fn)(NVPW_GPU_PeriodicSampler_IsGpuSupported_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Fn)(NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Fn)(NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_Fn)(NVPW_GPU_PeriodicSampler_BeginSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_V2_Fn)(NVPW_GPU_PeriodicSampler_BeginSession_V2_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_EndSession_Fn)(NVPW_GPU_PeriodicSampler_EndSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetCounterAvailability_Fn)(NVPW_GPU_PeriodicSampler_GetCounterAvailability_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetConfig_Fn)(NVPW_GPU_PeriodicSampler_SetConfig_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StartSampling_Fn)(NVPW_GPU_PeriodicSampler_StartSampling_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StopSampling_Fn)(NVPW_GPU_PeriodicSampler_StopSampling_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CpuTrigger_Fn)(NVPW_GPU_PeriodicSampler_CpuTrigger_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize_Fn)(NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize_Fn)(NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Fn)(NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_Fn)(NVPW_GPU_PeriodicSampler_DecodeCounters_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Fn)(NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Fn)(NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2_Fn)(NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetGpuTimestamp_Fn)(NVPW_GPU_PeriodicSampler_GetGpuTimestamp_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer_Fn)(NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset_Fn)(NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V3_Fn)(NVPW_GPU_PeriodicSampler_DecodeCounters_V3_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_ResetDecoderState_Fn)(NVPW_GPU_PeriodicSampler_ResetDecoderState_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_RawCounterConfig_Create_Fn)(NVPW_VK_RawCounterConfig_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_RawMetricsConfig_Create_Fn)(NVPW_VK_RawMetricsConfig_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize_Fn)(NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_Initialize_Fn)(NVPW_VK_MetricsEvaluator_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateSize_Fn)(NVPW_VK_Profiler_CounterDataImage_CalculateSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_Initialize_Fn)(NVPW_VK_Profiler_CounterDataImage_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn)(NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer_Fn)(NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_LoadDriver_Fn)(NVPW_VK_LoadDriver_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Device_GetDeviceIndex_Fn)(NVPW_VK_Device_GetDeviceIndex_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredInstanceExtensions_Fn)(NVPW_VK_Profiler_GetRequiredInstanceExtensions_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredDeviceExtensions_Fn)(NVPW_VK_Profiler_GetRequiredDeviceExtensions_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_CalcTraceBufferSize_Fn)(NVPW_VK_Profiler_CalcTraceBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginSession_Fn)(NVPW_VK_Profiler_Queue_BeginSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndSession_Fn)(NVPW_VK_Profiler_Queue_EndSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Queue_ServicePendingGpuOperations_Fn)(NVPW_VK_Queue_ServicePendingGpuOperations_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_SetConfig_Fn)(NVPW_VK_Profiler_Queue_SetConfig_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_ClearConfig_Fn)(NVPW_VK_Profiler_Queue_ClearConfig_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginPass_Fn)(NVPW_VK_Profiler_Queue_BeginPass_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndPass_Fn)(NVPW_VK_Profiler_Queue_EndPass_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PushRange_Fn)(NVPW_VK_Profiler_CommandBuffer_PushRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PopRange_Fn)(NVPW_VK_Profiler_CommandBuffer_PopRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_DecodeCounters_Fn)(NVPW_VK_Profiler_Queue_DecodeCounters_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_IsGpuSupported_Fn)(NVPW_VK_Profiler_IsGpuSupported_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_GetCounterAvailability_Fn)(NVPW_VK_Profiler_Queue_GetCounterAvailability_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_IsGpuSupported_Fn)(NVPW_VK_MiniTrace_IsGpuSupported_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Create_Fn)(NVPW_VK_MiniTrace_DeviceState_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Destroy_Fn)(NVPW_VK_MiniTrace_DeviceState_Destroy_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Register_Fn)(NVPW_VK_MiniTrace_Queue_Register_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Unregister_Fn)(NVPW_VK_MiniTrace_Queue_Unregister_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger_Fn)(NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu_Fn)(NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp_Fn)(NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_RawCounterConfig_Create_Fn)(NVPW_VKSC_RawCounterConfig_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_RawMetricsConfig_Create_Fn)(NVPW_VKSC_RawMetricsConfig_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize_Fn)(NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_Initialize_Fn)(NVPW_VKSC_MetricsEvaluator_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateSize_Fn)(NVPW_VKSC_Profiler_CounterDataImage_CalculateSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_Initialize_Fn)(NVPW_VKSC_Profiler_CounterDataImage_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn)(NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer_Fn)(NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_LoadDriver_Fn)(NVPW_VKSC_LoadDriver_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Device_GetDeviceIndex_Fn)(NVPW_VKSC_Device_GetDeviceIndex_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredInstanceExtensions_Fn)(NVPW_VKSC_Profiler_GetRequiredInstanceExtensions_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredDeviceExtensions_Fn)(NVPW_VKSC_Profiler_GetRequiredDeviceExtensions_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcTraceBufferSize_Fn)(NVPW_VKSC_Profiler_CalcTraceBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcPerfmonBufferSize_Fn)(NVPW_VKSC_Profiler_CalcPerfmonBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetDeviceObjectReservation_Fn)(NVPW_VKSC_Profiler_GetDeviceObjectReservation_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginSession_Fn)(NVPW_VKSC_Profiler_Queue_BeginSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndSession_Fn)(NVPW_VKSC_Profiler_Queue_EndSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations_Fn)(NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_SetConfig_Fn)(NVPW_VKSC_Profiler_Queue_SetConfig_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ClearConfig_Fn)(NVPW_VKSC_Profiler_Queue_ClearConfig_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginPass_Fn)(NVPW_VKSC_Profiler_Queue_BeginPass_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndPass_Fn)(NVPW_VKSC_Profiler_Queue_EndPass_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics_Fn)(NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics_Fn)(NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute_Fn)(NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute_Fn)(NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_InitializeRangeCommands_Fn)(NVPW_VKSC_Profiler_Queue_InitializeRangeCommands_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_DecodeCounters_Fn)(NVPW_VKSC_Profiler_Queue_DecodeCounters_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_IsGpuSupported_Fn)(NVPW_VKSC_Profiler_IsGpuSupported_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_RawMetricsConfig_Create_Fn)(NVPW_OpenGL_RawMetricsConfig_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize_Fn)(NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_Initialize_Fn)(NVPW_OpenGL_MetricsEvaluator_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_RawCounterConfig_Create_Fn)(NVPW_OpenGL_RawCounterConfig_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_LoadDriver_Fn)(NVPW_OpenGL_LoadDriver_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_GetCurrentGraphicsContext_Fn)(NVPW_OpenGL_GetCurrentGraphicsContext_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_GraphicsContext_GetDeviceIndex_Fn)(NVPW_OpenGL_GraphicsContext_GetDeviceIndex_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_IsGpuSupported_Fn)(NVPW_OpenGL_Profiler_IsGpuSupported_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize_Fn)(NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_Initialize_Fn)(NVPW_OpenGL_Profiler_CounterDataImage_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn)(NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer_Fn)(NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CalcTraceBufferSize_Fn)(NVPW_OpenGL_Profiler_CalcTraceBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginSession_Fn)(NVPW_OpenGL_Profiler_GraphicsContext_BeginSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndSession_Fn)(NVPW_OpenGL_Profiler_GraphicsContext_EndSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_SetConfig_Fn)(NVPW_OpenGL_Profiler_GraphicsContext_SetConfig_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig_Fn)(NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginPass_Fn)(NVPW_OpenGL_Profiler_GraphicsContext_BeginPass_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndPass_Fn)(NVPW_OpenGL_Profiler_GraphicsContext_EndPass_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PushRange_Fn)(NVPW_OpenGL_Profiler_GraphicsContext_PushRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PopRange_Fn)(NVPW_OpenGL_Profiler_GraphicsContext_PopRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters_Fn)(NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability_Fn)(NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_RawMetricsConfig_Create_Fn)(NVPW_EGL_RawMetricsConfig_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize_Fn)(NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_Initialize_Fn)(NVPW_EGL_MetricsEvaluator_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_RawCounterConfig_Create_Fn)(NVPW_EGL_RawCounterConfig_Create_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_LoadDriver_Fn)(NVPW_EGL_LoadDriver_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_GetCurrentGraphicsContext_Fn)(NVPW_EGL_GetCurrentGraphicsContext_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_GraphicsContext_GetDeviceIndex_Fn)(NVPW_EGL_GraphicsContext_GetDeviceIndex_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_IsGpuSupported_Fn)(NVPW_EGL_Profiler_IsGpuSupported_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateSize_Fn)(NVPW_EGL_Profiler_CounterDataImage_CalculateSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_Initialize_Fn)(NVPW_EGL_Profiler_CounterDataImage_Initialize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn)(NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer_Fn)(NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CalcTraceBufferSize_Fn)(NVPW_EGL_Profiler_CalcTraceBufferSize_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginSession_Fn)(NVPW_EGL_Profiler_GraphicsContext_BeginSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndSession_Fn)(NVPW_EGL_Profiler_GraphicsContext_EndSession_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_SetConfig_Fn)(NVPW_EGL_Profiler_GraphicsContext_SetConfig_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_ClearConfig_Fn)(NVPW_EGL_Profiler_GraphicsContext_ClearConfig_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginPass_Fn)(NVPW_EGL_Profiler_GraphicsContext_BeginPass_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndPass_Fn)(NVPW_EGL_Profiler_GraphicsContext_EndPass_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PushRange_Fn)(NVPW_EGL_Profiler_GraphicsContext_PushRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PopRange_Fn)(NVPW_EGL_Profiler_GraphicsContext_PopRange_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_DecodeCounters_Fn)(NVPW_EGL_Profiler_GraphicsContext_DecodeCounters_Params* pParams);
+typedef NVPA_Status (*NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability_Fn)(NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability_Params* pParams);
+typedef struct NVPERF_HOST_IMPL_ApiFunctions {
+    NVPERF_HOST_IMPL_NVPA_GetProcAddress_Fn                                NVPA_GetProcAddress;
+    NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPaths_Fn                           NVPW_SetLibraryLoadPaths;
+    NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPathsW_Fn                          NVPW_SetLibraryLoadPathsW;
+    NVPERF_HOST_IMPL_NVPW_InitializeHost_Fn                                NVPW_InitializeHost;
+    NVPERF_HOST_IMPL_NVPW_GetSupportedChipNames_Fn                         NVPW_GetSupportedChipNames;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_Destroy_Fn                      NVPW_RawMetricsConfig_Destroy;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_SetCounterAvailability_Fn       NVPW_RawMetricsConfig_SetCounterAvailability;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_BeginPassGroup_Fn               NVPW_RawMetricsConfig_BeginPassGroup;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_EndPassGroup_Fn                 NVPW_RawMetricsConfig_EndPassGroup;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumMetrics_Fn                NVPW_RawMetricsConfig_GetNumMetrics;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetMetricProperties_V2_Fn       NVPW_RawMetricsConfig_GetMetricProperties_V2;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_AddMetrics_Fn                   NVPW_RawMetricsConfig_AddMetrics;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_IsAddMetricsPossible_Fn         NVPW_RawMetricsConfig_IsAddMetricsPossible;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GenerateConfigImage_Fn          NVPW_RawMetricsConfig_GenerateConfigImage;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetConfigImage_Fn               NVPW_RawMetricsConfig_GetConfigImage;
+    NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumPasses_V2_Fn              NVPW_RawMetricsConfig_GetNumPasses_V2;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_RawCounterDomainToString_Fn     NVPW_RawCounterConfig_RawCounterDomainToString;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_StringToRawCounterDomain_Fn     NVPW_RawCounterConfig_StringToRawCounterDomain;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetSupportedChipNames_Fn        NVPW_RawCounterConfig_GetSupportedChipNames;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_Destroy_Fn                      NVPW_RawCounterConfig_Destroy;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_SetCounterAvailability_Fn       NVPW_RawCounterConfig_SetCounterAvailability;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains_Fn NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups_Fn NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_IsCooperativeDomainGroup_Fn     NVPW_RawCounterConfig_IsCooperativeDomainGroup;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains_Fn NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_BeginPassGroup_Fn               NVPW_RawCounterConfig_BeginPassGroup;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_EndPassGroup_Fn                 NVPW_RawCounterConfig_EndPassGroup;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumRawCounters_Fn            NVPW_RawCounterConfig_GetNumRawCounters;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterName_Fn            NVPW_RawCounterConfig_GetRawCounterName;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterProperties_Fn      NVPW_RawCounterConfig_GetRawCounterProperties;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AddRawCounters_Fn               NVPW_RawCounterConfig_AddRawCounters;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AreRawCountersSchedulable_Fn    NVPW_RawCounterConfig_AreRawCountersSchedulable;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_MergePassGroups_Fn              NVPW_RawCounterConfig_MergePassGroups;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GenerateConfigImage_Fn          NVPW_RawCounterConfig_GenerateConfigImage;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetConfigImage_Fn               NVPW_RawCounterConfig_GetConfigImage;
+    NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumPasses_Fn                 NVPW_RawCounterConfig_GetNumPasses;
+    NVPERF_HOST_IMPL_NVPW_Config_GetRawCounterInfo_Fn                      NVPW_Config_GetRawCounterInfo;
+    NVPERF_HOST_IMPL_NVPW_Config_GetRawCounters_Fn                         NVPW_Config_GetRawCounters;
+    NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Fn NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize;
+    NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Fn NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_Destroy_Fn                      NVPW_MetricsEvaluator_Destroy;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricNames_Fn               NVPW_MetricsEvaluator_GetMetricNames;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricTypeAndIndex_Fn        NVPW_MetricsEvaluator_GetMetricTypeAndIndex;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest_Fn NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_HwUnitToString_Fn               NVPW_MetricsEvaluator_HwUnitToString;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetCounterProperties_Fn         NVPW_MetricsEvaluator_GetCounterProperties;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetRatioMetricProperties_Fn     NVPW_MetricsEvaluator_GetRatioMetricProperties;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetThroughputMetricProperties_Fn NVPW_MetricsEvaluator_GetThroughputMetricProperties;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetSupportedSubmetrics_Fn       NVPW_MetricsEvaluator_GetSupportedSubmetrics;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricRawDependencies_Fn     NVPW_MetricsEvaluator_GetMetricRawDependencies;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_DimUnitToString_Fn              NVPW_MetricsEvaluator_DimUnitToString;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricDimUnits_Fn            NVPW_MetricsEvaluator_GetMetricDimUnits;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetUserData_Fn                  NVPW_MetricsEvaluator_SetUserData;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_EvaluateToGpuValues_Fn          NVPW_MetricsEvaluator_EvaluateToGpuValues;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetDeviceAttributes_Fn          NVPW_MetricsEvaluator_SetDeviceAttributes;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize_Fn NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString_Fn NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Commit_Fn    NVPW_MetricsEvaluator_UserDefinedMetrics_Commit;
+    NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames_Fn NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames;
+    NVPERF_HOST_IMPL_NVPW_CounterData_CalculateCounterDataImageCopySize_Fn NVPW_CounterData_CalculateCounterDataImageCopySize;
+    NVPERF_HOST_IMPL_NVPW_CounterData_InitializeCounterDataImageCopy_Fn    NVPW_CounterData_InitializeCounterDataImageCopy;
+    NVPERF_HOST_IMPL_NVPW_CounterData_ExtractCounterDataPrefix_Fn          NVPW_CounterData_ExtractCounterDataPrefix;
+    NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Create_Fn                    NVPW_CounterDataCombiner_Create;
+    NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Destroy_Fn                   NVPW_CounterDataCombiner_Destroy;
+    NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CreateRange_Fn               NVPW_CounterDataCombiner_CreateRange;
+    NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CopyIntoRange_Fn             NVPW_CounterDataCombiner_CopyIntoRange;
+    NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_AccumulateIntoRange_Fn       NVPW_CounterDataCombiner_AccumulateIntoRange;
+    NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_SumIntoRange_Fn              NVPW_CounterDataCombiner_SumIntoRange;
+    NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_WeightedSumIntoRange_Fn      NVPW_CounterDataCombiner_WeightedSumIntoRange;
+    NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Create_Fn                     NVPW_CounterDataBuilder_Create;
+    NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Destroy_Fn                    NVPW_CounterDataBuilder_Destroy;
+    NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddMetrics_Fn                 NVPW_CounterDataBuilder_AddMetrics;
+    NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddRawCounters_Fn             NVPW_CounterDataBuilder_AddRawCounters;
+    NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_GetCounterDataPrefix_Fn       NVPW_CounterDataBuilder_GetCounterDataPrefix;
+    NVPERF_HOST_IMPL_NVPW_InitializeTarget_Fn                              NVPW_InitializeTarget;
+    NVPERF_HOST_IMPL_NVPW_GetDeviceCount_Fn                                NVPW_GetDeviceCount;
+    NVPERF_HOST_IMPL_NVPW_Device_GetNames_Fn                               NVPW_Device_GetNames;
+    NVPERF_HOST_IMPL_NVPW_Device_GetUUID_Fn                                NVPW_Device_GetUUID;
+    NVPERF_HOST_IMPL_NVPW_Device_GetPciBusIds_Fn                           NVPW_Device_GetPciBusIds;
+    NVPERF_HOST_IMPL_NVPW_Device_GetMigAttributes_Fn                       NVPW_Device_GetMigAttributes;
+    NVPERF_HOST_IMPL_NVPW_Adapter_GetDeviceIndex_Fn                        NVPW_Adapter_GetDeviceIndex;
+    NVPERF_HOST_IMPL_NVPW_CounterData_GetNumRanges_Fn                      NVPW_CounterData_GetNumRanges;
+    NVPERF_HOST_IMPL_NVPW_CounterData_GetChipName_Fn                       NVPW_CounterData_GetChipName;
+    NVPERF_HOST_IMPL_NVPW_Config_GetNumPasses_V2_Fn                        NVPW_Config_GetNumPasses_V2;
+    NVPERF_HOST_IMPL_NVPW_QueryVersionNumber_Fn                            NVPW_QueryVersionNumber;
+    NVPERF_HOST_IMPL_NVPW_Device_GetClockStatus_Fn                         NVPW_Device_GetClockStatus;
+    NVPERF_HOST_IMPL_NVPW_Device_SetClockSetting_Fn                        NVPW_Device_SetClockSetting;
+    NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_GetState_Fn                   NVPW_ThrottlingDetector_GetState;
+    NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_BeginSession_Fn               NVPW_ThrottlingDetector_BeginSession;
+    NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_Sample_Fn                     NVPW_ThrottlingDetector_Sample;
+    NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_EndSession_Fn                 NVPW_ThrottlingDetector_EndSession;
+    NVPERF_HOST_IMPL_NVPW_CounterData_GetRangeDescriptions_Fn              NVPW_CounterData_GetRangeDescriptions;
+    NVPERF_HOST_IMPL_NVPW_Profiler_CounterData_GetRangeDescriptions_Fn     NVPW_Profiler_CounterData_GetRangeDescriptions;
+    NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetSampleTime_Fn     NVPW_PeriodicSampler_CounterData_GetSampleTime;
+    NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_TrimInPlace_Fn       NVPW_PeriodicSampler_CounterData_TrimInPlace;
+    NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetInfo_Fn           NVPW_PeriodicSampler_CounterData_GetInfo;
+    NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetTriggerCount_Fn   NVPW_PeriodicSampler_CounterData_GetTriggerCount;
+    NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_IsDataComplete_Fn    NVPW_PeriodicSampler_CounterData_IsDataComplete;
+    NVPERF_HOST_IMPL_NVPW_Device_RawCounterConfig_Create_Fn                NVPW_Device_RawCounterConfig_Create;
+    NVPERF_HOST_IMPL_NVPW_Device_RawMetricsConfig_Create_Fn                NVPW_Device_RawMetricsConfig_Create;
+    NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize_Fn NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize;
+    NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_Initialize_Fn            NVPW_Device_MetricsEvaluator_Initialize;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsGpuSupported_Fn            NVPW_GPU_PeriodicSampler_IsGpuSupported;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Fn NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Fn NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_Fn              NVPW_GPU_PeriodicSampler_BeginSession;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_V2_Fn           NVPW_GPU_PeriodicSampler_BeginSession_V2;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_EndSession_Fn                NVPW_GPU_PeriodicSampler_EndSession;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetCounterAvailability_Fn    NVPW_GPU_PeriodicSampler_GetCounterAvailability;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetConfig_Fn                 NVPW_GPU_PeriodicSampler_SetConfig;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StartSampling_Fn             NVPW_GPU_PeriodicSampler_StartSampling;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StopSampling_Fn              NVPW_GPU_PeriodicSampler_StopSampling;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CpuTrigger_Fn                NVPW_GPU_PeriodicSampler_CpuTrigger;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize_Fn NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize_Fn NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Fn     NVPW_GPU_PeriodicSampler_GetRecordBufferStatus;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_Fn            NVPW_GPU_PeriodicSampler_DecodeCounters;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Fn         NVPW_GPU_PeriodicSampler_DecodeCounters_V2;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Fn NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2_Fn  NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetGpuTimestamp_Fn           NVPW_GPU_PeriodicSampler_GetGpuTimestamp;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer_Fn   NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset_Fn NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V3_Fn         NVPW_GPU_PeriodicSampler_DecodeCounters_V3;
+    NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_ResetDecoderState_Fn         NVPW_GPU_PeriodicSampler_ResetDecoderState;
+    NVPERF_HOST_IMPL_NVPW_VK_RawCounterConfig_Create_Fn                    NVPW_VK_RawCounterConfig_Create;
+    NVPERF_HOST_IMPL_NVPW_VK_RawMetricsConfig_Create_Fn                    NVPW_VK_RawMetricsConfig_Create;
+    NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize_Fn NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize;
+    NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_Initialize_Fn                NVPW_VK_MetricsEvaluator_Initialize;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateSize_Fn    NVPW_VK_Profiler_CounterDataImage_CalculateSize;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_Initialize_Fn       NVPW_VK_Profiler_CounterDataImage_Initialize;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer_Fn NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer;
+    NVPERF_HOST_IMPL_NVPW_VK_LoadDriver_Fn                                 NVPW_VK_LoadDriver;
+    NVPERF_HOST_IMPL_NVPW_VK_Device_GetDeviceIndex_Fn                      NVPW_VK_Device_GetDeviceIndex;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredInstanceExtensions_Fn     NVPW_VK_Profiler_GetRequiredInstanceExtensions;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredDeviceExtensions_Fn       NVPW_VK_Profiler_GetRequiredDeviceExtensions;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_CalcTraceBufferSize_Fn               NVPW_VK_Profiler_CalcTraceBufferSize;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginSession_Fn                NVPW_VK_Profiler_Queue_BeginSession;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndSession_Fn                  NVPW_VK_Profiler_Queue_EndSession;
+    NVPERF_HOST_IMPL_NVPW_VK_Queue_ServicePendingGpuOperations_Fn          NVPW_VK_Queue_ServicePendingGpuOperations;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_SetConfig_Fn                   NVPW_VK_Profiler_Queue_SetConfig;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_ClearConfig_Fn                 NVPW_VK_Profiler_Queue_ClearConfig;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginPass_Fn                   NVPW_VK_Profiler_Queue_BeginPass;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndPass_Fn                     NVPW_VK_Profiler_Queue_EndPass;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PushRange_Fn           NVPW_VK_Profiler_CommandBuffer_PushRange;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PopRange_Fn            NVPW_VK_Profiler_CommandBuffer_PopRange;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_DecodeCounters_Fn              NVPW_VK_Profiler_Queue_DecodeCounters;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_IsGpuSupported_Fn                    NVPW_VK_Profiler_IsGpuSupported;
+    NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_GetCounterAvailability_Fn      NVPW_VK_Profiler_Queue_GetCounterAvailability;
+    NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_IsGpuSupported_Fn                   NVPW_VK_MiniTrace_IsGpuSupported;
+    NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Create_Fn               NVPW_VK_MiniTrace_DeviceState_Create;
+    NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Destroy_Fn              NVPW_VK_MiniTrace_DeviceState_Destroy;
+    NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Register_Fn                   NVPW_VK_MiniTrace_Queue_Register;
+    NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Unregister_Fn                 NVPW_VK_MiniTrace_Queue_Unregister;
+    NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger_Fn    NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger;
+    NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu_Fn          NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu;
+    NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp_Fn      NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp;
+    NVPERF_HOST_IMPL_NVPW_VKSC_RawCounterConfig_Create_Fn                  NVPW_VKSC_RawCounterConfig_Create;
+    NVPERF_HOST_IMPL_NVPW_VKSC_RawMetricsConfig_Create_Fn                  NVPW_VKSC_RawMetricsConfig_Create;
+    NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize_Fn NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize;
+    NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_Initialize_Fn              NVPW_VKSC_MetricsEvaluator_Initialize;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateSize_Fn  NVPW_VKSC_Profiler_CounterDataImage_CalculateSize;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_Initialize_Fn     NVPW_VKSC_Profiler_CounterDataImage_Initialize;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer_Fn NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer;
+    NVPERF_HOST_IMPL_NVPW_VKSC_LoadDriver_Fn                               NVPW_VKSC_LoadDriver;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Device_GetDeviceIndex_Fn                    NVPW_VKSC_Device_GetDeviceIndex;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredInstanceExtensions_Fn   NVPW_VKSC_Profiler_GetRequiredInstanceExtensions;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredDeviceExtensions_Fn     NVPW_VKSC_Profiler_GetRequiredDeviceExtensions;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcTraceBufferSize_Fn             NVPW_VKSC_Profiler_CalcTraceBufferSize;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcPerfmonBufferSize_Fn           NVPW_VKSC_Profiler_CalcPerfmonBufferSize;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetDeviceObjectReservation_Fn      NVPW_VKSC_Profiler_GetDeviceObjectReservation;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginSession_Fn              NVPW_VKSC_Profiler_Queue_BeginSession;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndSession_Fn                NVPW_VKSC_Profiler_Queue_EndSession;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations_Fn NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_SetConfig_Fn                 NVPW_VKSC_Profiler_Queue_SetConfig;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ClearConfig_Fn               NVPW_VKSC_Profiler_Queue_ClearConfig;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginPass_Fn                 NVPW_VKSC_Profiler_Queue_BeginPass;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndPass_Fn                   NVPW_VKSC_Profiler_Queue_EndPass;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics_Fn NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics_Fn  NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute_Fn  NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute_Fn   NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_InitializeRangeCommands_Fn   NVPW_VKSC_Profiler_Queue_InitializeRangeCommands;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_DecodeCounters_Fn            NVPW_VKSC_Profiler_Queue_DecodeCounters;
+    NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_IsGpuSupported_Fn                  NVPW_VKSC_Profiler_IsGpuSupported;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_RawMetricsConfig_Create_Fn                NVPW_OpenGL_RawMetricsConfig_Create;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize_Fn NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_Initialize_Fn            NVPW_OpenGL_MetricsEvaluator_Initialize;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_RawCounterConfig_Create_Fn                NVPW_OpenGL_RawCounterConfig_Create;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_LoadDriver_Fn                             NVPW_OpenGL_LoadDriver;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_GetCurrentGraphicsContext_Fn              NVPW_OpenGL_GetCurrentGraphicsContext;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_GraphicsContext_GetDeviceIndex_Fn         NVPW_OpenGL_GraphicsContext_GetDeviceIndex;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_IsGpuSupported_Fn                NVPW_OpenGL_Profiler_IsGpuSupported;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize_Fn NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_Initialize_Fn   NVPW_OpenGL_Profiler_CounterDataImage_Initialize;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer_Fn NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CalcTraceBufferSize_Fn           NVPW_OpenGL_Profiler_CalcTraceBufferSize;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginSession_Fn  NVPW_OpenGL_Profiler_GraphicsContext_BeginSession;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndSession_Fn    NVPW_OpenGL_Profiler_GraphicsContext_EndSession;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_SetConfig_Fn     NVPW_OpenGL_Profiler_GraphicsContext_SetConfig;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig_Fn   NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginPass_Fn     NVPW_OpenGL_Profiler_GraphicsContext_BeginPass;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndPass_Fn       NVPW_OpenGL_Profiler_GraphicsContext_EndPass;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PushRange_Fn     NVPW_OpenGL_Profiler_GraphicsContext_PushRange;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PopRange_Fn      NVPW_OpenGL_Profiler_GraphicsContext_PopRange;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters_Fn NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters;
+    NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability_Fn NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability;
+    NVPERF_HOST_IMPL_NVPW_EGL_RawMetricsConfig_Create_Fn                   NVPW_EGL_RawMetricsConfig_Create;
+    NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize_Fn NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize;
+    NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_Initialize_Fn               NVPW_EGL_MetricsEvaluator_Initialize;
+    NVPERF_HOST_IMPL_NVPW_EGL_RawCounterConfig_Create_Fn                   NVPW_EGL_RawCounterConfig_Create;
+    NVPERF_HOST_IMPL_NVPW_EGL_LoadDriver_Fn                                NVPW_EGL_LoadDriver;
+    NVPERF_HOST_IMPL_NVPW_EGL_GetCurrentGraphicsContext_Fn                 NVPW_EGL_GetCurrentGraphicsContext;
+    NVPERF_HOST_IMPL_NVPW_EGL_GraphicsContext_GetDeviceIndex_Fn            NVPW_EGL_GraphicsContext_GetDeviceIndex;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_IsGpuSupported_Fn                   NVPW_EGL_Profiler_IsGpuSupported;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateSize_Fn   NVPW_EGL_Profiler_CounterDataImage_CalculateSize;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_Initialize_Fn      NVPW_EGL_Profiler_CounterDataImage_Initialize;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer_Fn NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CalcTraceBufferSize_Fn              NVPW_EGL_Profiler_CalcTraceBufferSize;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginSession_Fn     NVPW_EGL_Profiler_GraphicsContext_BeginSession;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndSession_Fn       NVPW_EGL_Profiler_GraphicsContext_EndSession;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_SetConfig_Fn        NVPW_EGL_Profiler_GraphicsContext_SetConfig;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_ClearConfig_Fn      NVPW_EGL_Profiler_GraphicsContext_ClearConfig;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginPass_Fn        NVPW_EGL_Profiler_GraphicsContext_BeginPass;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndPass_Fn          NVPW_EGL_Profiler_GraphicsContext_EndPass;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PushRange_Fn        NVPW_EGL_Profiler_GraphicsContext_PushRange;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PopRange_Fn         NVPW_EGL_Profiler_GraphicsContext_PopRange;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_DecodeCounters_Fn   NVPW_EGL_Profiler_GraphicsContext_DecodeCounters;
+    NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability_Fn NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability;
+} NVPERF_HOST_IMPL_ApiFunctions;
+
+NVPERF_HOST_IMPL_FN NVPA_GenericFn NVPERF_HOST_IMPL_NVPA_GetProcAddress_Default(const char* pFunctionName);
+NVPERF_HOST_IMPL_FN NVPA_GenericFn NVPERF_HOST_IMPL_NVPA_GetProcAddress_Default(const char* pFunctionName);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPaths_Default(NVPW_SetLibraryLoadPaths_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPathsW_Default(NVPW_SetLibraryLoadPathsW_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_InitializeHost_Default(NVPW_InitializeHost_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GetSupportedChipNames_Default(NVPW_GetSupportedChipNames_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_Destroy_Default(NVPW_RawMetricsConfig_Destroy_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_SetCounterAvailability_Default(NVPW_RawMetricsConfig_SetCounterAvailability_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_BeginPassGroup_Default(NVPW_RawMetricsConfig_BeginPassGroup_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_EndPassGroup_Default(NVPW_RawMetricsConfig_EndPassGroup_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumMetrics_Default(NVPW_RawMetricsConfig_GetNumMetrics_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetMetricProperties_V2_Default(NVPW_RawMetricsConfig_GetMetricProperties_V2_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_AddMetrics_Default(NVPW_RawMetricsConfig_AddMetrics_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_IsAddMetricsPossible_Default(NVPW_RawMetricsConfig_IsAddMetricsPossible_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GenerateConfigImage_Default(NVPW_RawMetricsConfig_GenerateConfigImage_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetConfigImage_Default(NVPW_RawMetricsConfig_GetConfigImage_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumPasses_V2_Default(NVPW_RawMetricsConfig_GetNumPasses_V2_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_RawCounterDomainToString_Default(NVPW_RawCounterConfig_RawCounterDomainToString_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_StringToRawCounterDomain_Default(NVPW_RawCounterConfig_StringToRawCounterDomain_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetSupportedChipNames_Default(NVPW_RawCounterConfig_GetSupportedChipNames_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_Destroy_Default(NVPW_RawCounterConfig_Destroy_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_SetCounterAvailability_Default(NVPW_RawCounterConfig_SetCounterAvailability_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains_Default(NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups_Default(NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_IsCooperativeDomainGroup_Default(NVPW_RawCounterConfig_IsCooperativeDomainGroup_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains_Default(NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_BeginPassGroup_Default(NVPW_RawCounterConfig_BeginPassGroup_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_EndPassGroup_Default(NVPW_RawCounterConfig_EndPassGroup_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumRawCounters_Default(NVPW_RawCounterConfig_GetNumRawCounters_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterName_Default(NVPW_RawCounterConfig_GetRawCounterName_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterProperties_Default(NVPW_RawCounterConfig_GetRawCounterProperties_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AddRawCounters_Default(NVPW_RawCounterConfig_AddRawCounters_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AreRawCountersSchedulable_Default(NVPW_RawCounterConfig_AreRawCountersSchedulable_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_MergePassGroups_Default(NVPW_RawCounterConfig_MergePassGroups_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GenerateConfigImage_Default(NVPW_RawCounterConfig_GenerateConfigImage_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetConfigImage_Default(NVPW_RawCounterConfig_GetConfigImage_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumPasses_Default(NVPW_RawCounterConfig_GetNumPasses_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Config_GetRawCounterInfo_Default(NVPW_Config_GetRawCounterInfo_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Config_GetRawCounters_Default(NVPW_Config_GetRawCounters_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Default(NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Default(NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_Destroy_Default(NVPW_MetricsEvaluator_Destroy_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricNames_Default(NVPW_MetricsEvaluator_GetMetricNames_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricTypeAndIndex_Default(NVPW_MetricsEvaluator_GetMetricTypeAndIndex_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest_Default(NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_HwUnitToString_Default(NVPW_MetricsEvaluator_HwUnitToString_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetCounterProperties_Default(NVPW_MetricsEvaluator_GetCounterProperties_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetRatioMetricProperties_Default(NVPW_MetricsEvaluator_GetRatioMetricProperties_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetThroughputMetricProperties_Default(NVPW_MetricsEvaluator_GetThroughputMetricProperties_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetSupportedSubmetrics_Default(NVPW_MetricsEvaluator_GetSupportedSubmetrics_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricRawDependencies_Default(NVPW_MetricsEvaluator_GetMetricRawDependencies_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_DimUnitToString_Default(NVPW_MetricsEvaluator_DimUnitToString_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricDimUnits_Default(NVPW_MetricsEvaluator_GetMetricDimUnits_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetUserData_Default(NVPW_MetricsEvaluator_SetUserData_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_EvaluateToGpuValues_Default(NVPW_MetricsEvaluator_EvaluateToGpuValues_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetDeviceAttributes_Default(NVPW_MetricsEvaluator_SetDeviceAttributes_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize_Default(NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString_Default(NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Commit_Default(NVPW_MetricsEvaluator_UserDefinedMetrics_Commit_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames_Default(NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_CalculateCounterDataImageCopySize_Default(NVPW_CounterData_CalculateCounterDataImageCopySize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_InitializeCounterDataImageCopy_Default(NVPW_CounterData_InitializeCounterDataImageCopy_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_ExtractCounterDataPrefix_Default(NVPW_CounterData_ExtractCounterDataPrefix_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Create_Default(NVPW_CounterDataCombiner_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Destroy_Default(NVPW_CounterDataCombiner_Destroy_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CreateRange_Default(NVPW_CounterDataCombiner_CreateRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CopyIntoRange_Default(NVPW_CounterDataCombiner_CopyIntoRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_AccumulateIntoRange_Default(NVPW_CounterDataCombiner_AccumulateIntoRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_SumIntoRange_Default(NVPW_CounterDataCombiner_SumIntoRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_WeightedSumIntoRange_Default(NVPW_CounterDataCombiner_WeightedSumIntoRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Create_Default(NVPW_CounterDataBuilder_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Destroy_Default(NVPW_CounterDataBuilder_Destroy_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddMetrics_Default(NVPW_CounterDataBuilder_AddMetrics_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddRawCounters_Default(NVPW_CounterDataBuilder_AddRawCounters_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_GetCounterDataPrefix_Default(NVPW_CounterDataBuilder_GetCounterDataPrefix_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_InitializeTarget_Default(NVPW_InitializeTarget_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GetDeviceCount_Default(NVPW_GetDeviceCount_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_GetNames_Default(NVPW_Device_GetNames_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_GetUUID_Default(NVPW_Device_GetUUID_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_GetPciBusIds_Default(NVPW_Device_GetPciBusIds_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_GetMigAttributes_Default(NVPW_Device_GetMigAttributes_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Adapter_GetDeviceIndex_Default(NVPW_Adapter_GetDeviceIndex_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_GetNumRanges_Default(NVPW_CounterData_GetNumRanges_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_GetChipName_Default(NVPW_CounterData_GetChipName_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Config_GetNumPasses_V2_Default(NVPW_Config_GetNumPasses_V2_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_QueryVersionNumber_Default(NVPW_QueryVersionNumber_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_GetClockStatus_Default(NVPW_Device_GetClockStatus_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_SetClockSetting_Default(NVPW_Device_SetClockSetting_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_GetState_Default(NVPW_ThrottlingDetector_GetState_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_BeginSession_Default(NVPW_ThrottlingDetector_BeginSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_Sample_Default(NVPW_ThrottlingDetector_Sample_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_EndSession_Default(NVPW_ThrottlingDetector_EndSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_GetRangeDescriptions_Default(NVPW_CounterData_GetRangeDescriptions_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Profiler_CounterData_GetRangeDescriptions_Default(NVPW_Profiler_CounterData_GetRangeDescriptions_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetSampleTime_Default(NVPW_PeriodicSampler_CounterData_GetSampleTime_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_TrimInPlace_Default(NVPW_PeriodicSampler_CounterData_TrimInPlace_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetInfo_Default(NVPW_PeriodicSampler_CounterData_GetInfo_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetTriggerCount_Default(NVPW_PeriodicSampler_CounterData_GetTriggerCount_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_IsDataComplete_Default(NVPW_PeriodicSampler_CounterData_IsDataComplete_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_RawCounterConfig_Create_Default(NVPW_Device_RawCounterConfig_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_RawMetricsConfig_Create_Default(NVPW_Device_RawMetricsConfig_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize_Default(NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_Initialize_Default(NVPW_Device_MetricsEvaluator_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsGpuSupported_Default(NVPW_GPU_PeriodicSampler_IsGpuSupported_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Default(NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Default(NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_Default(NVPW_GPU_PeriodicSampler_BeginSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_V2_Default(NVPW_GPU_PeriodicSampler_BeginSession_V2_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_EndSession_Default(NVPW_GPU_PeriodicSampler_EndSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetCounterAvailability_Default(NVPW_GPU_PeriodicSampler_GetCounterAvailability_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetConfig_Default(NVPW_GPU_PeriodicSampler_SetConfig_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StartSampling_Default(NVPW_GPU_PeriodicSampler_StartSampling_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StopSampling_Default(NVPW_GPU_PeriodicSampler_StopSampling_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CpuTrigger_Default(NVPW_GPU_PeriodicSampler_CpuTrigger_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize_Default(NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize_Default(NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Default(NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_Default(NVPW_GPU_PeriodicSampler_DecodeCounters_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Default(NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Default(NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2_Default(NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetGpuTimestamp_Default(NVPW_GPU_PeriodicSampler_GetGpuTimestamp_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer_Default(NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset_Default(NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V3_Default(NVPW_GPU_PeriodicSampler_DecodeCounters_V3_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_ResetDecoderState_Default(NVPW_GPU_PeriodicSampler_ResetDecoderState_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_RawCounterConfig_Create_Default(NVPW_VK_RawCounterConfig_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_RawMetricsConfig_Create_Default(NVPW_VK_RawMetricsConfig_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize_Default(NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_Initialize_Default(NVPW_VK_MetricsEvaluator_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateSize_Default(NVPW_VK_Profiler_CounterDataImage_CalculateSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_Initialize_Default(NVPW_VK_Profiler_CounterDataImage_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize_Default(NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer_Default(NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_LoadDriver_Default(NVPW_VK_LoadDriver_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Device_GetDeviceIndex_Default(NVPW_VK_Device_GetDeviceIndex_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredInstanceExtensions_Default(NVPW_VK_Profiler_GetRequiredInstanceExtensions_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredDeviceExtensions_Default(NVPW_VK_Profiler_GetRequiredDeviceExtensions_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CalcTraceBufferSize_Default(NVPW_VK_Profiler_CalcTraceBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginSession_Default(NVPW_VK_Profiler_Queue_BeginSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndSession_Default(NVPW_VK_Profiler_Queue_EndSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Queue_ServicePendingGpuOperations_Default(NVPW_VK_Queue_ServicePendingGpuOperations_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_SetConfig_Default(NVPW_VK_Profiler_Queue_SetConfig_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_ClearConfig_Default(NVPW_VK_Profiler_Queue_ClearConfig_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginPass_Default(NVPW_VK_Profiler_Queue_BeginPass_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndPass_Default(NVPW_VK_Profiler_Queue_EndPass_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PushRange_Default(NVPW_VK_Profiler_CommandBuffer_PushRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PopRange_Default(NVPW_VK_Profiler_CommandBuffer_PopRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_DecodeCounters_Default(NVPW_VK_Profiler_Queue_DecodeCounters_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_IsGpuSupported_Default(NVPW_VK_Profiler_IsGpuSupported_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_GetCounterAvailability_Default(NVPW_VK_Profiler_Queue_GetCounterAvailability_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_IsGpuSupported_Default(NVPW_VK_MiniTrace_IsGpuSupported_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Create_Default(NVPW_VK_MiniTrace_DeviceState_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Destroy_Default(NVPW_VK_MiniTrace_DeviceState_Destroy_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Register_Default(NVPW_VK_MiniTrace_Queue_Register_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Unregister_Default(NVPW_VK_MiniTrace_Queue_Unregister_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger_Default(NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu_Default(NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp_Default(NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_RawCounterConfig_Create_Default(NVPW_VKSC_RawCounterConfig_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_RawMetricsConfig_Create_Default(NVPW_VKSC_RawMetricsConfig_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize_Default(NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_Initialize_Default(NVPW_VKSC_MetricsEvaluator_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateSize_Default(NVPW_VKSC_Profiler_CounterDataImage_CalculateSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_Initialize_Default(NVPW_VKSC_Profiler_CounterDataImage_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize_Default(NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer_Default(NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_LoadDriver_Default(NVPW_VKSC_LoadDriver_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Device_GetDeviceIndex_Default(NVPW_VKSC_Device_GetDeviceIndex_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredInstanceExtensions_Default(NVPW_VKSC_Profiler_GetRequiredInstanceExtensions_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredDeviceExtensions_Default(NVPW_VKSC_Profiler_GetRequiredDeviceExtensions_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcTraceBufferSize_Default(NVPW_VKSC_Profiler_CalcTraceBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcPerfmonBufferSize_Default(NVPW_VKSC_Profiler_CalcPerfmonBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetDeviceObjectReservation_Default(NVPW_VKSC_Profiler_GetDeviceObjectReservation_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginSession_Default(NVPW_VKSC_Profiler_Queue_BeginSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndSession_Default(NVPW_VKSC_Profiler_Queue_EndSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations_Default(NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_SetConfig_Default(NVPW_VKSC_Profiler_Queue_SetConfig_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ClearConfig_Default(NVPW_VKSC_Profiler_Queue_ClearConfig_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginPass_Default(NVPW_VKSC_Profiler_Queue_BeginPass_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndPass_Default(NVPW_VKSC_Profiler_Queue_EndPass_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics_Default(NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics_Default(NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute_Default(NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute_Default(NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_InitializeRangeCommands_Default(NVPW_VKSC_Profiler_Queue_InitializeRangeCommands_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_DecodeCounters_Default(NVPW_VKSC_Profiler_Queue_DecodeCounters_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_IsGpuSupported_Default(NVPW_VKSC_Profiler_IsGpuSupported_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_RawMetricsConfig_Create_Default(NVPW_OpenGL_RawMetricsConfig_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize_Default(NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_Initialize_Default(NVPW_OpenGL_MetricsEvaluator_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_RawCounterConfig_Create_Default(NVPW_OpenGL_RawCounterConfig_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_LoadDriver_Default(NVPW_OpenGL_LoadDriver_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_GetCurrentGraphicsContext_Default(NVPW_OpenGL_GetCurrentGraphicsContext_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_GraphicsContext_GetDeviceIndex_Default(NVPW_OpenGL_GraphicsContext_GetDeviceIndex_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_IsGpuSupported_Default(NVPW_OpenGL_Profiler_IsGpuSupported_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize_Default(NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_Initialize_Default(NVPW_OpenGL_Profiler_CounterDataImage_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Default(NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer_Default(NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CalcTraceBufferSize_Default(NVPW_OpenGL_Profiler_CalcTraceBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginSession_Default(NVPW_OpenGL_Profiler_GraphicsContext_BeginSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndSession_Default(NVPW_OpenGL_Profiler_GraphicsContext_EndSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_SetConfig_Default(NVPW_OpenGL_Profiler_GraphicsContext_SetConfig_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig_Default(NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginPass_Default(NVPW_OpenGL_Profiler_GraphicsContext_BeginPass_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndPass_Default(NVPW_OpenGL_Profiler_GraphicsContext_EndPass_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PushRange_Default(NVPW_OpenGL_Profiler_GraphicsContext_PushRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PopRange_Default(NVPW_OpenGL_Profiler_GraphicsContext_PopRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters_Default(NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability_Default(NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_RawMetricsConfig_Create_Default(NVPW_EGL_RawMetricsConfig_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize_Default(NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_Initialize_Default(NVPW_EGL_MetricsEvaluator_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_RawCounterConfig_Create_Default(NVPW_EGL_RawCounterConfig_Create_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_LoadDriver_Default(NVPW_EGL_LoadDriver_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_GetCurrentGraphicsContext_Default(NVPW_EGL_GetCurrentGraphicsContext_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_GraphicsContext_GetDeviceIndex_Default(NVPW_EGL_GraphicsContext_GetDeviceIndex_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_IsGpuSupported_Default(NVPW_EGL_Profiler_IsGpuSupported_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateSize_Default(NVPW_EGL_Profiler_CounterDataImage_CalculateSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_Initialize_Default(NVPW_EGL_Profiler_CounterDataImage_Initialize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Default(NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer_Default(NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CalcTraceBufferSize_Default(NVPW_EGL_Profiler_CalcTraceBufferSize_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginSession_Default(NVPW_EGL_Profiler_GraphicsContext_BeginSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndSession_Default(NVPW_EGL_Profiler_GraphicsContext_EndSession_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_SetConfig_Default(NVPW_EGL_Profiler_GraphicsContext_SetConfig_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_ClearConfig_Default(NVPW_EGL_Profiler_GraphicsContext_ClearConfig_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginPass_Default(NVPW_EGL_Profiler_GraphicsContext_BeginPass_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndPass_Default(NVPW_EGL_Profiler_GraphicsContext_EndPass_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PushRange_Default(NVPW_EGL_Profiler_GraphicsContext_PushRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PopRange_Default(NVPW_EGL_Profiler_GraphicsContext_PopRange_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_DecodeCounters_Default(NVPW_EGL_Profiler_GraphicsContext_DecodeCounters_Params* pParams);
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability_Default(NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability_Params* pParams);
+
+#if _WIN32
+typedef wchar_t NVPERF_HOST_IMPL_PathChar;
+#else
+typedef char NVPERF_HOST_IMPL_PathChar;
+#endif
+
+typedef struct NVPERF_HOST_IMPL_Module
+{
+    void* hModNvPerf;
+    NVPERF_HOST_IMPL_NVPA_GetProcAddress_Fn nvPerfGetProcAddress;
+    NVPERF_HOST_IMPL_ApiFunctions fn;
+    size_t numSearchPaths;
+    NVPERF_HOST_IMPL_PathChar** ppSearchPaths;
+    NVPA_Status defaultStatus;
+} NVPERF_HOST_IMPL_Module;
+
+#define NVPERF_HOST_IMPL_MODULE_INITIALIZER \
+{ \
+      0 /* hModNvPerf */ \
+    , 0 /* nvPerfGetProcAddress */ \
+    , { \
+          &NVPERF_HOST_IMPL_NVPA_GetProcAddress_Default \
+        , &NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPaths_Default \
+        , &NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPathsW_Default \
+        , &NVPERF_HOST_IMPL_NVPW_InitializeHost_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GetSupportedChipNames_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_Destroy_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_SetCounterAvailability_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_BeginPassGroup_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_EndPassGroup_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumMetrics_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetMetricProperties_V2_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_AddMetrics_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_IsAddMetricsPossible_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GenerateConfigImage_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetConfigImage_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumPasses_V2_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_RawCounterDomainToString_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_StringToRawCounterDomain_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetSupportedChipNames_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_Destroy_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_SetCounterAvailability_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_IsCooperativeDomainGroup_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_BeginPassGroup_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_EndPassGroup_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumRawCounters_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterName_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterProperties_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AddRawCounters_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AreRawCountersSchedulable_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_MergePassGroups_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GenerateConfigImage_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetConfigImage_Default \
+        , &NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumPasses_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Config_GetRawCounterInfo_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Config_GetRawCounters_Default \
+        , &NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_Destroy_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricNames_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricTypeAndIndex_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_HwUnitToString_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetCounterProperties_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetRatioMetricProperties_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetThroughputMetricProperties_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetSupportedSubmetrics_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricRawDependencies_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_DimUnitToString_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricDimUnits_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetUserData_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_EvaluateToGpuValues_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetDeviceAttributes_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Commit_Default \
+        , &NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterData_CalculateCounterDataImageCopySize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterData_InitializeCounterDataImageCopy_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterData_ExtractCounterDataPrefix_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Destroy_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CreateRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CopyIntoRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_AccumulateIntoRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_SumIntoRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_WeightedSumIntoRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Destroy_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddMetrics_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddRawCounters_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_GetCounterDataPrefix_Default \
+        , &NVPERF_HOST_IMPL_NVPW_InitializeTarget_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GetDeviceCount_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Device_GetNames_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Device_GetUUID_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Device_GetPciBusIds_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Device_GetMigAttributes_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Adapter_GetDeviceIndex_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterData_GetNumRanges_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterData_GetChipName_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Config_GetNumPasses_V2_Default \
+        , &NVPERF_HOST_IMPL_NVPW_QueryVersionNumber_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Device_GetClockStatus_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Device_SetClockSetting_Default \
+        , &NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_GetState_Default \
+        , &NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_BeginSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_Sample_Default \
+        , &NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_EndSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_CounterData_GetRangeDescriptions_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Profiler_CounterData_GetRangeDescriptions_Default \
+        , &NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetSampleTime_Default \
+        , &NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_TrimInPlace_Default \
+        , &NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetInfo_Default \
+        , &NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetTriggerCount_Default \
+        , &NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_IsDataComplete_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Device_RawCounterConfig_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Device_RawMetricsConfig_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsGpuSupported_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_V2_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_EndSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetCounterAvailability_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetConfig_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StartSampling_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StopSampling_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CpuTrigger_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetGpuTimestamp_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V3_Default \
+        , &NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_ResetDecoderState_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_RawCounterConfig_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_RawMetricsConfig_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_LoadDriver_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Device_GetDeviceIndex_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredInstanceExtensions_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredDeviceExtensions_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_CalcTraceBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Queue_ServicePendingGpuOperations_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_SetConfig_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_ClearConfig_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginPass_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndPass_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PushRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PopRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_DecodeCounters_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_IsGpuSupported_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_GetCounterAvailability_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_IsGpuSupported_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Destroy_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Register_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Unregister_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_RawCounterConfig_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_RawMetricsConfig_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_LoadDriver_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Device_GetDeviceIndex_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredInstanceExtensions_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredDeviceExtensions_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcTraceBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcPerfmonBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetDeviceObjectReservation_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_SetConfig_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ClearConfig_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginPass_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndPass_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_InitializeRangeCommands_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_DecodeCounters_Default \
+        , &NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_IsGpuSupported_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_RawMetricsConfig_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_RawCounterConfig_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_LoadDriver_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_GetCurrentGraphicsContext_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_GraphicsContext_GetDeviceIndex_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_IsGpuSupported_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CalcTraceBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_SetConfig_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginPass_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndPass_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PushRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PopRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters_Default \
+        , &NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_RawMetricsConfig_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_RawCounterConfig_Create_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_LoadDriver_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_GetCurrentGraphicsContext_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_GraphicsContext_GetDeviceIndex_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_IsGpuSupported_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_Initialize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CalcTraceBufferSize_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndSession_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_SetConfig_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_ClearConfig_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginPass_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndPass_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PushRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PopRange_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_DecodeCounters_Default \
+        , &NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability_Default \
+      } \
+    , 0 /* numSearchPaths */ \
+    , 0 /* ppSearchPaths */ \
+    , NVPA_STATUS_NOT_INITIALIZED \
+}
+
+#if NVPERF_HOST_IMPL_DATA_LINK_ONCE || !defined(__cplusplus)
+NVPERF_HOST_IMPL_DATA NVPERF_HOST_IMPL_Module NVPERF_HOST_IMPL_g_module = NVPERF_HOST_IMPL_MODULE_INITIALIZER;
+
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_Module* NVPERF_HOST_IMPL_GetModule(void)
+{
+    return &NVPERF_HOST_IMPL_g_module;
+}
+#else
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_Module* NVPERF_HOST_IMPL_GetModule(void)
+{
+    static NVPERF_HOST_IMPL_Module s_module = NVPERF_HOST_IMPL_MODULE_INITIALIZER;
+    return &s_module;
+}
+#endif
+
+/* Default implementations */
+NVPERF_HOST_IMPL_FN NVPA_GenericFn NVPERF_HOST_IMPL_NVPA_GetProcAddress_Default(const char* pFunctionName)
+{
+    (void)pFunctionName;
+    return NULL;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GetSupportedChipNames_Default(NVPW_GetSupportedChipNames_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_Destroy_Default(NVPW_RawMetricsConfig_Destroy_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_SetCounterAvailability_Default(NVPW_RawMetricsConfig_SetCounterAvailability_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_BeginPassGroup_Default(NVPW_RawMetricsConfig_BeginPassGroup_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_EndPassGroup_Default(NVPW_RawMetricsConfig_EndPassGroup_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumMetrics_Default(NVPW_RawMetricsConfig_GetNumMetrics_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetMetricProperties_V2_Default(NVPW_RawMetricsConfig_GetMetricProperties_V2_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_AddMetrics_Default(NVPW_RawMetricsConfig_AddMetrics_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_IsAddMetricsPossible_Default(NVPW_RawMetricsConfig_IsAddMetricsPossible_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GenerateConfigImage_Default(NVPW_RawMetricsConfig_GenerateConfigImage_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetConfigImage_Default(NVPW_RawMetricsConfig_GetConfigImage_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumPasses_V2_Default(NVPW_RawMetricsConfig_GetNumPasses_V2_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_RawCounterDomainToString_Default(NVPW_RawCounterConfig_RawCounterDomainToString_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_StringToRawCounterDomain_Default(NVPW_RawCounterConfig_StringToRawCounterDomain_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetSupportedChipNames_Default(NVPW_RawCounterConfig_GetSupportedChipNames_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_Destroy_Default(NVPW_RawCounterConfig_Destroy_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_SetCounterAvailability_Default(NVPW_RawCounterConfig_SetCounterAvailability_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains_Default(NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups_Default(NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_IsCooperativeDomainGroup_Default(NVPW_RawCounterConfig_IsCooperativeDomainGroup_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains_Default(NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_BeginPassGroup_Default(NVPW_RawCounterConfig_BeginPassGroup_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_EndPassGroup_Default(NVPW_RawCounterConfig_EndPassGroup_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumRawCounters_Default(NVPW_RawCounterConfig_GetNumRawCounters_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterName_Default(NVPW_RawCounterConfig_GetRawCounterName_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterProperties_Default(NVPW_RawCounterConfig_GetRawCounterProperties_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AddRawCounters_Default(NVPW_RawCounterConfig_AddRawCounters_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AreRawCountersSchedulable_Default(NVPW_RawCounterConfig_AreRawCountersSchedulable_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_MergePassGroups_Default(NVPW_RawCounterConfig_MergePassGroups_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GenerateConfigImage_Default(NVPW_RawCounterConfig_GenerateConfigImage_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetConfigImage_Default(NVPW_RawCounterConfig_GetConfigImage_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumPasses_Default(NVPW_RawCounterConfig_GetNumPasses_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Config_GetRawCounterInfo_Default(NVPW_Config_GetRawCounterInfo_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Config_GetRawCounters_Default(NVPW_Config_GetRawCounters_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Default(NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Default(NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_Destroy_Default(NVPW_MetricsEvaluator_Destroy_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricNames_Default(NVPW_MetricsEvaluator_GetMetricNames_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricTypeAndIndex_Default(NVPW_MetricsEvaluator_GetMetricTypeAndIndex_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest_Default(NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_HwUnitToString_Default(NVPW_MetricsEvaluator_HwUnitToString_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetCounterProperties_Default(NVPW_MetricsEvaluator_GetCounterProperties_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetRatioMetricProperties_Default(NVPW_MetricsEvaluator_GetRatioMetricProperties_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetThroughputMetricProperties_Default(NVPW_MetricsEvaluator_GetThroughputMetricProperties_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetSupportedSubmetrics_Default(NVPW_MetricsEvaluator_GetSupportedSubmetrics_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricRawDependencies_Default(NVPW_MetricsEvaluator_GetMetricRawDependencies_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_DimUnitToString_Default(NVPW_MetricsEvaluator_DimUnitToString_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricDimUnits_Default(NVPW_MetricsEvaluator_GetMetricDimUnits_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetUserData_Default(NVPW_MetricsEvaluator_SetUserData_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_EvaluateToGpuValues_Default(NVPW_MetricsEvaluator_EvaluateToGpuValues_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetDeviceAttributes_Default(NVPW_MetricsEvaluator_SetDeviceAttributes_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize_Default(NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString_Default(NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Commit_Default(NVPW_MetricsEvaluator_UserDefinedMetrics_Commit_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames_Default(NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_CalculateCounterDataImageCopySize_Default(NVPW_CounterData_CalculateCounterDataImageCopySize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_InitializeCounterDataImageCopy_Default(NVPW_CounterData_InitializeCounterDataImageCopy_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_ExtractCounterDataPrefix_Default(NVPW_CounterData_ExtractCounterDataPrefix_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Create_Default(NVPW_CounterDataCombiner_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Destroy_Default(NVPW_CounterDataCombiner_Destroy_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CreateRange_Default(NVPW_CounterDataCombiner_CreateRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CopyIntoRange_Default(NVPW_CounterDataCombiner_CopyIntoRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_AccumulateIntoRange_Default(NVPW_CounterDataCombiner_AccumulateIntoRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_SumIntoRange_Default(NVPW_CounterDataCombiner_SumIntoRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_WeightedSumIntoRange_Default(NVPW_CounterDataCombiner_WeightedSumIntoRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Create_Default(NVPW_CounterDataBuilder_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Destroy_Default(NVPW_CounterDataBuilder_Destroy_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddMetrics_Default(NVPW_CounterDataBuilder_AddMetrics_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddRawCounters_Default(NVPW_CounterDataBuilder_AddRawCounters_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_GetCounterDataPrefix_Default(NVPW_CounterDataBuilder_GetCounterDataPrefix_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GetDeviceCount_Default(NVPW_GetDeviceCount_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_GetNames_Default(NVPW_Device_GetNames_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_GetUUID_Default(NVPW_Device_GetUUID_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_GetPciBusIds_Default(NVPW_Device_GetPciBusIds_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_GetMigAttributes_Default(NVPW_Device_GetMigAttributes_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Adapter_GetDeviceIndex_Default(NVPW_Adapter_GetDeviceIndex_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_GetNumRanges_Default(NVPW_CounterData_GetNumRanges_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_GetChipName_Default(NVPW_CounterData_GetChipName_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Config_GetNumPasses_V2_Default(NVPW_Config_GetNumPasses_V2_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_QueryVersionNumber_Default(NVPW_QueryVersionNumber_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_GetClockStatus_Default(NVPW_Device_GetClockStatus_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_SetClockSetting_Default(NVPW_Device_SetClockSetting_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_GetState_Default(NVPW_ThrottlingDetector_GetState_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_BeginSession_Default(NVPW_ThrottlingDetector_BeginSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_Sample_Default(NVPW_ThrottlingDetector_Sample_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_EndSession_Default(NVPW_ThrottlingDetector_EndSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_CounterData_GetRangeDescriptions_Default(NVPW_CounterData_GetRangeDescriptions_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Profiler_CounterData_GetRangeDescriptions_Default(NVPW_Profiler_CounterData_GetRangeDescriptions_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetSampleTime_Default(NVPW_PeriodicSampler_CounterData_GetSampleTime_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_TrimInPlace_Default(NVPW_PeriodicSampler_CounterData_TrimInPlace_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetInfo_Default(NVPW_PeriodicSampler_CounterData_GetInfo_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetTriggerCount_Default(NVPW_PeriodicSampler_CounterData_GetTriggerCount_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_IsDataComplete_Default(NVPW_PeriodicSampler_CounterData_IsDataComplete_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_RawCounterConfig_Create_Default(NVPW_Device_RawCounterConfig_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_RawMetricsConfig_Create_Default(NVPW_Device_RawMetricsConfig_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize_Default(NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_Initialize_Default(NVPW_Device_MetricsEvaluator_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsGpuSupported_Default(NVPW_GPU_PeriodicSampler_IsGpuSupported_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Default(NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Default(NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_Default(NVPW_GPU_PeriodicSampler_BeginSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_V2_Default(NVPW_GPU_PeriodicSampler_BeginSession_V2_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_EndSession_Default(NVPW_GPU_PeriodicSampler_EndSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetCounterAvailability_Default(NVPW_GPU_PeriodicSampler_GetCounterAvailability_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetConfig_Default(NVPW_GPU_PeriodicSampler_SetConfig_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StartSampling_Default(NVPW_GPU_PeriodicSampler_StartSampling_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StopSampling_Default(NVPW_GPU_PeriodicSampler_StopSampling_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CpuTrigger_Default(NVPW_GPU_PeriodicSampler_CpuTrigger_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize_Default(NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize_Default(NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Default(NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_Default(NVPW_GPU_PeriodicSampler_DecodeCounters_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Default(NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Default(NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2_Default(NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetGpuTimestamp_Default(NVPW_GPU_PeriodicSampler_GetGpuTimestamp_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer_Default(NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset_Default(NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V3_Default(NVPW_GPU_PeriodicSampler_DecodeCounters_V3_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_ResetDecoderState_Default(NVPW_GPU_PeriodicSampler_ResetDecoderState_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_RawCounterConfig_Create_Default(NVPW_VK_RawCounterConfig_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_RawMetricsConfig_Create_Default(NVPW_VK_RawMetricsConfig_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize_Default(NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_Initialize_Default(NVPW_VK_MetricsEvaluator_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateSize_Default(NVPW_VK_Profiler_CounterDataImage_CalculateSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_Initialize_Default(NVPW_VK_Profiler_CounterDataImage_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize_Default(NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer_Default(NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_LoadDriver_Default(NVPW_VK_LoadDriver_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Device_GetDeviceIndex_Default(NVPW_VK_Device_GetDeviceIndex_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredInstanceExtensions_Default(NVPW_VK_Profiler_GetRequiredInstanceExtensions_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredDeviceExtensions_Default(NVPW_VK_Profiler_GetRequiredDeviceExtensions_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CalcTraceBufferSize_Default(NVPW_VK_Profiler_CalcTraceBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginSession_Default(NVPW_VK_Profiler_Queue_BeginSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndSession_Default(NVPW_VK_Profiler_Queue_EndSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Queue_ServicePendingGpuOperations_Default(NVPW_VK_Queue_ServicePendingGpuOperations_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_SetConfig_Default(NVPW_VK_Profiler_Queue_SetConfig_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_ClearConfig_Default(NVPW_VK_Profiler_Queue_ClearConfig_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginPass_Default(NVPW_VK_Profiler_Queue_BeginPass_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndPass_Default(NVPW_VK_Profiler_Queue_EndPass_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PushRange_Default(NVPW_VK_Profiler_CommandBuffer_PushRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PopRange_Default(NVPW_VK_Profiler_CommandBuffer_PopRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_DecodeCounters_Default(NVPW_VK_Profiler_Queue_DecodeCounters_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_IsGpuSupported_Default(NVPW_VK_Profiler_IsGpuSupported_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_GetCounterAvailability_Default(NVPW_VK_Profiler_Queue_GetCounterAvailability_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_IsGpuSupported_Default(NVPW_VK_MiniTrace_IsGpuSupported_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Create_Default(NVPW_VK_MiniTrace_DeviceState_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Destroy_Default(NVPW_VK_MiniTrace_DeviceState_Destroy_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Register_Default(NVPW_VK_MiniTrace_Queue_Register_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Unregister_Default(NVPW_VK_MiniTrace_Queue_Unregister_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger_Default(NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu_Default(NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp_Default(NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_RawCounterConfig_Create_Default(NVPW_VKSC_RawCounterConfig_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_RawMetricsConfig_Create_Default(NVPW_VKSC_RawMetricsConfig_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize_Default(NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_Initialize_Default(NVPW_VKSC_MetricsEvaluator_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateSize_Default(NVPW_VKSC_Profiler_CounterDataImage_CalculateSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_Initialize_Default(NVPW_VKSC_Profiler_CounterDataImage_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize_Default(NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer_Default(NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_LoadDriver_Default(NVPW_VKSC_LoadDriver_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Device_GetDeviceIndex_Default(NVPW_VKSC_Device_GetDeviceIndex_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredInstanceExtensions_Default(NVPW_VKSC_Profiler_GetRequiredInstanceExtensions_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredDeviceExtensions_Default(NVPW_VKSC_Profiler_GetRequiredDeviceExtensions_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcTraceBufferSize_Default(NVPW_VKSC_Profiler_CalcTraceBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcPerfmonBufferSize_Default(NVPW_VKSC_Profiler_CalcPerfmonBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetDeviceObjectReservation_Default(NVPW_VKSC_Profiler_GetDeviceObjectReservation_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginSession_Default(NVPW_VKSC_Profiler_Queue_BeginSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndSession_Default(NVPW_VKSC_Profiler_Queue_EndSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations_Default(NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_SetConfig_Default(NVPW_VKSC_Profiler_Queue_SetConfig_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ClearConfig_Default(NVPW_VKSC_Profiler_Queue_ClearConfig_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginPass_Default(NVPW_VKSC_Profiler_Queue_BeginPass_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndPass_Default(NVPW_VKSC_Profiler_Queue_EndPass_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics_Default(NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics_Default(NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute_Default(NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute_Default(NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_InitializeRangeCommands_Default(NVPW_VKSC_Profiler_Queue_InitializeRangeCommands_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_DecodeCounters_Default(NVPW_VKSC_Profiler_Queue_DecodeCounters_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_IsGpuSupported_Default(NVPW_VKSC_Profiler_IsGpuSupported_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_RawMetricsConfig_Create_Default(NVPW_OpenGL_RawMetricsConfig_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize_Default(NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_Initialize_Default(NVPW_OpenGL_MetricsEvaluator_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_RawCounterConfig_Create_Default(NVPW_OpenGL_RawCounterConfig_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_LoadDriver_Default(NVPW_OpenGL_LoadDriver_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_GetCurrentGraphicsContext_Default(NVPW_OpenGL_GetCurrentGraphicsContext_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_GraphicsContext_GetDeviceIndex_Default(NVPW_OpenGL_GraphicsContext_GetDeviceIndex_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_IsGpuSupported_Default(NVPW_OpenGL_Profiler_IsGpuSupported_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize_Default(NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_Initialize_Default(NVPW_OpenGL_Profiler_CounterDataImage_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Default(NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer_Default(NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CalcTraceBufferSize_Default(NVPW_OpenGL_Profiler_CalcTraceBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginSession_Default(NVPW_OpenGL_Profiler_GraphicsContext_BeginSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndSession_Default(NVPW_OpenGL_Profiler_GraphicsContext_EndSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_SetConfig_Default(NVPW_OpenGL_Profiler_GraphicsContext_SetConfig_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig_Default(NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginPass_Default(NVPW_OpenGL_Profiler_GraphicsContext_BeginPass_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndPass_Default(NVPW_OpenGL_Profiler_GraphicsContext_EndPass_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PushRange_Default(NVPW_OpenGL_Profiler_GraphicsContext_PushRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PopRange_Default(NVPW_OpenGL_Profiler_GraphicsContext_PopRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters_Default(NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability_Default(NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_RawMetricsConfig_Create_Default(NVPW_EGL_RawMetricsConfig_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize_Default(NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_Initialize_Default(NVPW_EGL_MetricsEvaluator_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_RawCounterConfig_Create_Default(NVPW_EGL_RawCounterConfig_Create_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_LoadDriver_Default(NVPW_EGL_LoadDriver_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_GetCurrentGraphicsContext_Default(NVPW_EGL_GetCurrentGraphicsContext_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_GraphicsContext_GetDeviceIndex_Default(NVPW_EGL_GraphicsContext_GetDeviceIndex_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_IsGpuSupported_Default(NVPW_EGL_Profiler_IsGpuSupported_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateSize_Default(NVPW_EGL_Profiler_CounterDataImage_CalculateSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_Initialize_Default(NVPW_EGL_Profiler_CounterDataImage_Initialize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Default(NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer_Default(NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CalcTraceBufferSize_Default(NVPW_EGL_Profiler_CalcTraceBufferSize_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginSession_Default(NVPW_EGL_Profiler_GraphicsContext_BeginSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndSession_Default(NVPW_EGL_Profiler_GraphicsContext_EndSession_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_SetConfig_Default(NVPW_EGL_Profiler_GraphicsContext_SetConfig_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_ClearConfig_Default(NVPW_EGL_Profiler_GraphicsContext_ClearConfig_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginPass_Default(NVPW_EGL_Profiler_GraphicsContext_BeginPass_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndPass_Default(NVPW_EGL_Profiler_GraphicsContext_EndPass_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PushRange_Default(NVPW_EGL_Profiler_GraphicsContext_PushRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PopRange_Default(NVPW_EGL_Profiler_GraphicsContext_PopRange_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_DecodeCounters_Default(NVPW_EGL_Profiler_GraphicsContext_DecodeCounters_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability_Default(NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability_Params* pParams)
+{
+    (void)pParams;
+    return NVPERF_HOST_IMPL_GetModule()->defaultStatus;
+}
+
+NVPERF_HOST_IMPL_FN NVPA_GenericFn NVPERF_HOST_IMPL_GetNvPerfProc(const char* pName, NVPA_GenericFn pDefault);
+NVPERF_HOST_IMPL_FN int NVPERF_HOST_IMPL_InitNvPerf(void);
+
+NVPERF_HOST_IMPL_FN void NVPERF_HOST_IMPL_InitNvPerfProcs(void)
+{
+    NVPERF_HOST_IMPL_Module* pModule = NVPERF_HOST_IMPL_GetModule();
+    pModule->fn.NVPA_GetProcAddress = (NVPERF_HOST_IMPL_NVPA_GetProcAddress_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPA_GetProcAddress", (NVPA_GenericFn)pModule->fn.NVPA_GetProcAddress);
+    pModule->fn.NVPW_SetLibraryLoadPaths = (NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPaths_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_SetLibraryLoadPaths", (NVPA_GenericFn)pModule->fn.NVPW_SetLibraryLoadPaths);
+    pModule->fn.NVPW_SetLibraryLoadPathsW = (NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPathsW_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_SetLibraryLoadPathsW", (NVPA_GenericFn)pModule->fn.NVPW_SetLibraryLoadPathsW);
+    pModule->fn.NVPW_InitializeHost = (NVPERF_HOST_IMPL_NVPW_InitializeHost_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_InitializeHost", (NVPA_GenericFn)pModule->fn.NVPW_InitializeHost);
+    pModule->fn.NVPW_GetSupportedChipNames = (NVPERF_HOST_IMPL_NVPW_GetSupportedChipNames_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GetSupportedChipNames", (NVPA_GenericFn)pModule->fn.NVPW_GetSupportedChipNames);
+    pModule->fn.NVPW_RawMetricsConfig_Destroy = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_Destroy_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_Destroy", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_Destroy);
+    pModule->fn.NVPW_RawMetricsConfig_SetCounterAvailability = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_SetCounterAvailability_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_SetCounterAvailability", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_SetCounterAvailability);
+    pModule->fn.NVPW_RawMetricsConfig_BeginPassGroup = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_BeginPassGroup_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_BeginPassGroup", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_BeginPassGroup);
+    pModule->fn.NVPW_RawMetricsConfig_EndPassGroup = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_EndPassGroup_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_EndPassGroup", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_EndPassGroup);
+    pModule->fn.NVPW_RawMetricsConfig_GetNumMetrics = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumMetrics_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_GetNumMetrics", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_GetNumMetrics);
+    pModule->fn.NVPW_RawMetricsConfig_GetMetricProperties_V2 = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetMetricProperties_V2_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_GetMetricProperties_V2", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_GetMetricProperties_V2);
+    pModule->fn.NVPW_RawMetricsConfig_AddMetrics = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_AddMetrics_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_AddMetrics", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_AddMetrics);
+    pModule->fn.NVPW_RawMetricsConfig_IsAddMetricsPossible = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_IsAddMetricsPossible_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_IsAddMetricsPossible", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_IsAddMetricsPossible);
+    pModule->fn.NVPW_RawMetricsConfig_GenerateConfigImage = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GenerateConfigImage_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_GenerateConfigImage", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_GenerateConfigImage);
+    pModule->fn.NVPW_RawMetricsConfig_GetConfigImage = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetConfigImage_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_GetConfigImage", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_GetConfigImage);
+    pModule->fn.NVPW_RawMetricsConfig_GetNumPasses_V2 = (NVPERF_HOST_IMPL_NVPW_RawMetricsConfig_GetNumPasses_V2_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawMetricsConfig_GetNumPasses_V2", (NVPA_GenericFn)pModule->fn.NVPW_RawMetricsConfig_GetNumPasses_V2);
+    pModule->fn.NVPW_RawCounterConfig_RawCounterDomainToString = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_RawCounterDomainToString_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_RawCounterDomainToString", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_RawCounterDomainToString);
+    pModule->fn.NVPW_RawCounterConfig_StringToRawCounterDomain = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_StringToRawCounterDomain_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_StringToRawCounterDomain", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_StringToRawCounterDomain);
+    pModule->fn.NVPW_RawCounterConfig_GetSupportedChipNames = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetSupportedChipNames_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_GetSupportedChipNames", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_GetSupportedChipNames);
+    pModule->fn.NVPW_RawCounterConfig_Destroy = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_Destroy_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_Destroy", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_Destroy);
+    pModule->fn.NVPW_RawCounterConfig_SetCounterAvailability = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_SetCounterAvailability_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_SetCounterAvailability", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_SetCounterAvailability);
+    pModule->fn.NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains);
+    pModule->fn.NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups);
+    pModule->fn.NVPW_RawCounterConfig_IsCooperativeDomainGroup = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_IsCooperativeDomainGroup_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_IsCooperativeDomainGroup", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_IsCooperativeDomainGroup);
+    pModule->fn.NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains);
+    pModule->fn.NVPW_RawCounterConfig_BeginPassGroup = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_BeginPassGroup_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_BeginPassGroup", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_BeginPassGroup);
+    pModule->fn.NVPW_RawCounterConfig_EndPassGroup = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_EndPassGroup_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_EndPassGroup", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_EndPassGroup);
+    pModule->fn.NVPW_RawCounterConfig_GetNumRawCounters = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumRawCounters_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_GetNumRawCounters", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_GetNumRawCounters);
+    pModule->fn.NVPW_RawCounterConfig_GetRawCounterName = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterName_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_GetRawCounterName", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_GetRawCounterName);
+    pModule->fn.NVPW_RawCounterConfig_GetRawCounterProperties = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetRawCounterProperties_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_GetRawCounterProperties", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_GetRawCounterProperties);
+    pModule->fn.NVPW_RawCounterConfig_AddRawCounters = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AddRawCounters_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_AddRawCounters", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_AddRawCounters);
+    pModule->fn.NVPW_RawCounterConfig_AreRawCountersSchedulable = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_AreRawCountersSchedulable_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_AreRawCountersSchedulable", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_AreRawCountersSchedulable);
+    pModule->fn.NVPW_RawCounterConfig_MergePassGroups = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_MergePassGroups_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_MergePassGroups", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_MergePassGroups);
+    pModule->fn.NVPW_RawCounterConfig_GenerateConfigImage = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GenerateConfigImage_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_GenerateConfigImage", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_GenerateConfigImage);
+    pModule->fn.NVPW_RawCounterConfig_GetConfigImage = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetConfigImage_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_GetConfigImage", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_GetConfigImage);
+    pModule->fn.NVPW_RawCounterConfig_GetNumPasses = (NVPERF_HOST_IMPL_NVPW_RawCounterConfig_GetNumPasses_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_RawCounterConfig_GetNumPasses", (NVPA_GenericFn)pModule->fn.NVPW_RawCounterConfig_GetNumPasses);
+    pModule->fn.NVPW_Config_GetRawCounterInfo = (NVPERF_HOST_IMPL_NVPW_Config_GetRawCounterInfo_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Config_GetRawCounterInfo", (NVPA_GenericFn)pModule->fn.NVPW_Config_GetRawCounterInfo);
+    pModule->fn.NVPW_Config_GetRawCounters = (NVPERF_HOST_IMPL_NVPW_Config_GetRawCounters_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Config_GetRawCounters", (NVPA_GenericFn)pModule->fn.NVPW_Config_GetRawCounters);
+    pModule->fn.NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize = (NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize", (NVPA_GenericFn)pModule->fn.NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize);
+    pModule->fn.NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize = (NVPERF_HOST_IMPL_NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize", (NVPA_GenericFn)pModule->fn.NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize);
+    pModule->fn.NVPW_MetricsEvaluator_Destroy = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_Destroy_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_Destroy", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_Destroy);
+    pModule->fn.NVPW_MetricsEvaluator_GetMetricNames = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricNames_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_GetMetricNames", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_GetMetricNames);
+    pModule->fn.NVPW_MetricsEvaluator_GetMetricTypeAndIndex = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricTypeAndIndex_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_GetMetricTypeAndIndex", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_GetMetricTypeAndIndex);
+    pModule->fn.NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest);
+    pModule->fn.NVPW_MetricsEvaluator_HwUnitToString = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_HwUnitToString_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_HwUnitToString", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_HwUnitToString);
+    pModule->fn.NVPW_MetricsEvaluator_GetCounterProperties = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetCounterProperties_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_GetCounterProperties", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_GetCounterProperties);
+    pModule->fn.NVPW_MetricsEvaluator_GetRatioMetricProperties = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetRatioMetricProperties_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_GetRatioMetricProperties", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_GetRatioMetricProperties);
+    pModule->fn.NVPW_MetricsEvaluator_GetThroughputMetricProperties = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetThroughputMetricProperties_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_GetThroughputMetricProperties", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_GetThroughputMetricProperties);
+    pModule->fn.NVPW_MetricsEvaluator_GetSupportedSubmetrics = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetSupportedSubmetrics_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_GetSupportedSubmetrics", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_GetSupportedSubmetrics);
+    pModule->fn.NVPW_MetricsEvaluator_GetMetricRawDependencies = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricRawDependencies_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_GetMetricRawDependencies", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_GetMetricRawDependencies);
+    pModule->fn.NVPW_MetricsEvaluator_DimUnitToString = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_DimUnitToString_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_DimUnitToString", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_DimUnitToString);
+    pModule->fn.NVPW_MetricsEvaluator_GetMetricDimUnits = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_GetMetricDimUnits_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_GetMetricDimUnits", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_GetMetricDimUnits);
+    pModule->fn.NVPW_MetricsEvaluator_SetUserData = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetUserData_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_SetUserData", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_SetUserData);
+    pModule->fn.NVPW_MetricsEvaluator_EvaluateToGpuValues = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_EvaluateToGpuValues_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_EvaluateToGpuValues", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_EvaluateToGpuValues);
+    pModule->fn.NVPW_MetricsEvaluator_SetDeviceAttributes = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_SetDeviceAttributes_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_SetDeviceAttributes", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_SetDeviceAttributes);
+    pModule->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize);
+    pModule->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString);
+    pModule->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_Commit = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_Commit_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_UserDefinedMetrics_Commit", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_Commit);
+    pModule->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames = (NVPERF_HOST_IMPL_NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames", (NVPA_GenericFn)pModule->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames);
+    pModule->fn.NVPW_CounterData_CalculateCounterDataImageCopySize = (NVPERF_HOST_IMPL_NVPW_CounterData_CalculateCounterDataImageCopySize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterData_CalculateCounterDataImageCopySize", (NVPA_GenericFn)pModule->fn.NVPW_CounterData_CalculateCounterDataImageCopySize);
+    pModule->fn.NVPW_CounterData_InitializeCounterDataImageCopy = (NVPERF_HOST_IMPL_NVPW_CounterData_InitializeCounterDataImageCopy_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterData_InitializeCounterDataImageCopy", (NVPA_GenericFn)pModule->fn.NVPW_CounterData_InitializeCounterDataImageCopy);
+    pModule->fn.NVPW_CounterData_ExtractCounterDataPrefix = (NVPERF_HOST_IMPL_NVPW_CounterData_ExtractCounterDataPrefix_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterData_ExtractCounterDataPrefix", (NVPA_GenericFn)pModule->fn.NVPW_CounterData_ExtractCounterDataPrefix);
+    pModule->fn.NVPW_CounterDataCombiner_Create = (NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataCombiner_Create", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataCombiner_Create);
+    pModule->fn.NVPW_CounterDataCombiner_Destroy = (NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_Destroy_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataCombiner_Destroy", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataCombiner_Destroy);
+    pModule->fn.NVPW_CounterDataCombiner_CreateRange = (NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CreateRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataCombiner_CreateRange", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataCombiner_CreateRange);
+    pModule->fn.NVPW_CounterDataCombiner_CopyIntoRange = (NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_CopyIntoRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataCombiner_CopyIntoRange", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataCombiner_CopyIntoRange);
+    pModule->fn.NVPW_CounterDataCombiner_AccumulateIntoRange = (NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_AccumulateIntoRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataCombiner_AccumulateIntoRange", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataCombiner_AccumulateIntoRange);
+    pModule->fn.NVPW_CounterDataCombiner_SumIntoRange = (NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_SumIntoRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataCombiner_SumIntoRange", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataCombiner_SumIntoRange);
+    pModule->fn.NVPW_CounterDataCombiner_WeightedSumIntoRange = (NVPERF_HOST_IMPL_NVPW_CounterDataCombiner_WeightedSumIntoRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataCombiner_WeightedSumIntoRange", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataCombiner_WeightedSumIntoRange);
+    pModule->fn.NVPW_CounterDataBuilder_Create = (NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataBuilder_Create", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataBuilder_Create);
+    pModule->fn.NVPW_CounterDataBuilder_Destroy = (NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_Destroy_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataBuilder_Destroy", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataBuilder_Destroy);
+    pModule->fn.NVPW_CounterDataBuilder_AddMetrics = (NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddMetrics_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataBuilder_AddMetrics", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataBuilder_AddMetrics);
+    pModule->fn.NVPW_CounterDataBuilder_AddRawCounters = (NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_AddRawCounters_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataBuilder_AddRawCounters", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataBuilder_AddRawCounters);
+    pModule->fn.NVPW_CounterDataBuilder_GetCounterDataPrefix = (NVPERF_HOST_IMPL_NVPW_CounterDataBuilder_GetCounterDataPrefix_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterDataBuilder_GetCounterDataPrefix", (NVPA_GenericFn)pModule->fn.NVPW_CounterDataBuilder_GetCounterDataPrefix);
+    pModule->fn.NVPW_InitializeTarget = (NVPERF_HOST_IMPL_NVPW_InitializeTarget_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_InitializeTarget", (NVPA_GenericFn)pModule->fn.NVPW_InitializeTarget);
+    pModule->fn.NVPW_GetDeviceCount = (NVPERF_HOST_IMPL_NVPW_GetDeviceCount_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GetDeviceCount", (NVPA_GenericFn)pModule->fn.NVPW_GetDeviceCount);
+    pModule->fn.NVPW_Device_GetNames = (NVPERF_HOST_IMPL_NVPW_Device_GetNames_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Device_GetNames", (NVPA_GenericFn)pModule->fn.NVPW_Device_GetNames);
+    pModule->fn.NVPW_Device_GetUUID = (NVPERF_HOST_IMPL_NVPW_Device_GetUUID_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Device_GetUUID", (NVPA_GenericFn)pModule->fn.NVPW_Device_GetUUID);
+    pModule->fn.NVPW_Device_GetPciBusIds = (NVPERF_HOST_IMPL_NVPW_Device_GetPciBusIds_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Device_GetPciBusIds", (NVPA_GenericFn)pModule->fn.NVPW_Device_GetPciBusIds);
+    pModule->fn.NVPW_Device_GetMigAttributes = (NVPERF_HOST_IMPL_NVPW_Device_GetMigAttributes_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Device_GetMigAttributes", (NVPA_GenericFn)pModule->fn.NVPW_Device_GetMigAttributes);
+    pModule->fn.NVPW_Adapter_GetDeviceIndex = (NVPERF_HOST_IMPL_NVPW_Adapter_GetDeviceIndex_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Adapter_GetDeviceIndex", (NVPA_GenericFn)pModule->fn.NVPW_Adapter_GetDeviceIndex);
+    pModule->fn.NVPW_CounterData_GetNumRanges = (NVPERF_HOST_IMPL_NVPW_CounterData_GetNumRanges_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterData_GetNumRanges", (NVPA_GenericFn)pModule->fn.NVPW_CounterData_GetNumRanges);
+    pModule->fn.NVPW_CounterData_GetChipName = (NVPERF_HOST_IMPL_NVPW_CounterData_GetChipName_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterData_GetChipName", (NVPA_GenericFn)pModule->fn.NVPW_CounterData_GetChipName);
+    pModule->fn.NVPW_Config_GetNumPasses_V2 = (NVPERF_HOST_IMPL_NVPW_Config_GetNumPasses_V2_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Config_GetNumPasses_V2", (NVPA_GenericFn)pModule->fn.NVPW_Config_GetNumPasses_V2);
+    pModule->fn.NVPW_QueryVersionNumber = (NVPERF_HOST_IMPL_NVPW_QueryVersionNumber_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_QueryVersionNumber", (NVPA_GenericFn)pModule->fn.NVPW_QueryVersionNumber);
+    pModule->fn.NVPW_Device_GetClockStatus = (NVPERF_HOST_IMPL_NVPW_Device_GetClockStatus_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Device_GetClockStatus", (NVPA_GenericFn)pModule->fn.NVPW_Device_GetClockStatus);
+    pModule->fn.NVPW_Device_SetClockSetting = (NVPERF_HOST_IMPL_NVPW_Device_SetClockSetting_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Device_SetClockSetting", (NVPA_GenericFn)pModule->fn.NVPW_Device_SetClockSetting);
+    pModule->fn.NVPW_ThrottlingDetector_GetState = (NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_GetState_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_ThrottlingDetector_GetState", (NVPA_GenericFn)pModule->fn.NVPW_ThrottlingDetector_GetState);
+    pModule->fn.NVPW_ThrottlingDetector_BeginSession = (NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_BeginSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_ThrottlingDetector_BeginSession", (NVPA_GenericFn)pModule->fn.NVPW_ThrottlingDetector_BeginSession);
+    pModule->fn.NVPW_ThrottlingDetector_Sample = (NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_Sample_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_ThrottlingDetector_Sample", (NVPA_GenericFn)pModule->fn.NVPW_ThrottlingDetector_Sample);
+    pModule->fn.NVPW_ThrottlingDetector_EndSession = (NVPERF_HOST_IMPL_NVPW_ThrottlingDetector_EndSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_ThrottlingDetector_EndSession", (NVPA_GenericFn)pModule->fn.NVPW_ThrottlingDetector_EndSession);
+    pModule->fn.NVPW_CounterData_GetRangeDescriptions = (NVPERF_HOST_IMPL_NVPW_CounterData_GetRangeDescriptions_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_CounterData_GetRangeDescriptions", (NVPA_GenericFn)pModule->fn.NVPW_CounterData_GetRangeDescriptions);
+    pModule->fn.NVPW_Profiler_CounterData_GetRangeDescriptions = (NVPERF_HOST_IMPL_NVPW_Profiler_CounterData_GetRangeDescriptions_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Profiler_CounterData_GetRangeDescriptions", (NVPA_GenericFn)pModule->fn.NVPW_Profiler_CounterData_GetRangeDescriptions);
+    pModule->fn.NVPW_PeriodicSampler_CounterData_GetSampleTime = (NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetSampleTime_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_PeriodicSampler_CounterData_GetSampleTime", (NVPA_GenericFn)pModule->fn.NVPW_PeriodicSampler_CounterData_GetSampleTime);
+    pModule->fn.NVPW_PeriodicSampler_CounterData_TrimInPlace = (NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_TrimInPlace_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_PeriodicSampler_CounterData_TrimInPlace", (NVPA_GenericFn)pModule->fn.NVPW_PeriodicSampler_CounterData_TrimInPlace);
+    pModule->fn.NVPW_PeriodicSampler_CounterData_GetInfo = (NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetInfo_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_PeriodicSampler_CounterData_GetInfo", (NVPA_GenericFn)pModule->fn.NVPW_PeriodicSampler_CounterData_GetInfo);
+    pModule->fn.NVPW_PeriodicSampler_CounterData_GetTriggerCount = (NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_GetTriggerCount_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_PeriodicSampler_CounterData_GetTriggerCount", (NVPA_GenericFn)pModule->fn.NVPW_PeriodicSampler_CounterData_GetTriggerCount);
+    pModule->fn.NVPW_PeriodicSampler_CounterData_IsDataComplete = (NVPERF_HOST_IMPL_NVPW_PeriodicSampler_CounterData_IsDataComplete_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_PeriodicSampler_CounterData_IsDataComplete", (NVPA_GenericFn)pModule->fn.NVPW_PeriodicSampler_CounterData_IsDataComplete);
+    pModule->fn.NVPW_Device_RawCounterConfig_Create = (NVPERF_HOST_IMPL_NVPW_Device_RawCounterConfig_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Device_RawCounterConfig_Create", (NVPA_GenericFn)pModule->fn.NVPW_Device_RawCounterConfig_Create);
+    pModule->fn.NVPW_Device_RawMetricsConfig_Create = (NVPERF_HOST_IMPL_NVPW_Device_RawMetricsConfig_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Device_RawMetricsConfig_Create", (NVPA_GenericFn)pModule->fn.NVPW_Device_RawMetricsConfig_Create);
+    pModule->fn.NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize = (NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize);
+    pModule->fn.NVPW_Device_MetricsEvaluator_Initialize = (NVPERF_HOST_IMPL_NVPW_Device_MetricsEvaluator_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_Device_MetricsEvaluator_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_Device_MetricsEvaluator_Initialize);
+    pModule->fn.NVPW_GPU_PeriodicSampler_IsGpuSupported = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsGpuSupported_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_IsGpuSupported", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_IsGpuSupported);
+    pModule->fn.NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources);
+    pModule->fn.NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize);
+    pModule->fn.NVPW_GPU_PeriodicSampler_BeginSession = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_BeginSession", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_BeginSession);
+    pModule->fn.NVPW_GPU_PeriodicSampler_BeginSession_V2 = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_BeginSession_V2_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_BeginSession_V2", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_BeginSession_V2);
+    pModule->fn.NVPW_GPU_PeriodicSampler_EndSession = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_EndSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_EndSession", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_EndSession);
+    pModule->fn.NVPW_GPU_PeriodicSampler_GetCounterAvailability = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetCounterAvailability_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_GetCounterAvailability", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_GetCounterAvailability);
+    pModule->fn.NVPW_GPU_PeriodicSampler_SetConfig = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetConfig_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_SetConfig", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_SetConfig);
+    pModule->fn.NVPW_GPU_PeriodicSampler_StartSampling = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StartSampling_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_StartSampling", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_StartSampling);
+    pModule->fn.NVPW_GPU_PeriodicSampler_StopSampling = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_StopSampling_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_StopSampling", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_StopSampling);
+    pModule->fn.NVPW_GPU_PeriodicSampler_CpuTrigger = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CpuTrigger_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_CpuTrigger", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_CpuTrigger);
+    pModule->fn.NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize);
+    pModule->fn.NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize);
+    pModule->fn.NVPW_GPU_PeriodicSampler_GetRecordBufferStatus = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_GetRecordBufferStatus", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_GetRecordBufferStatus);
+    pModule->fn.NVPW_GPU_PeriodicSampler_DecodeCounters = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_DecodeCounters", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_DecodeCounters);
+    pModule->fn.NVPW_GPU_PeriodicSampler_DecodeCounters_V2 = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_DecodeCounters_V2", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_DecodeCounters_V2);
+    pModule->fn.NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported);
+    pModule->fn.NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2 = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2);
+    pModule->fn.NVPW_GPU_PeriodicSampler_GetGpuTimestamp = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_GetGpuTimestamp_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_GetGpuTimestamp", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_GetGpuTimestamp);
+    pModule->fn.NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer);
+    pModule->fn.NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset);
+    pModule->fn.NVPW_GPU_PeriodicSampler_DecodeCounters_V3 = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_DecodeCounters_V3_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_DecodeCounters_V3", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_DecodeCounters_V3);
+    pModule->fn.NVPW_GPU_PeriodicSampler_ResetDecoderState = (NVPERF_HOST_IMPL_NVPW_GPU_PeriodicSampler_ResetDecoderState_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_GPU_PeriodicSampler_ResetDecoderState", (NVPA_GenericFn)pModule->fn.NVPW_GPU_PeriodicSampler_ResetDecoderState);
+    pModule->fn.NVPW_VK_RawCounterConfig_Create = (NVPERF_HOST_IMPL_NVPW_VK_RawCounterConfig_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_RawCounterConfig_Create", (NVPA_GenericFn)pModule->fn.NVPW_VK_RawCounterConfig_Create);
+    pModule->fn.NVPW_VK_RawMetricsConfig_Create = (NVPERF_HOST_IMPL_NVPW_VK_RawMetricsConfig_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_RawMetricsConfig_Create", (NVPA_GenericFn)pModule->fn.NVPW_VK_RawMetricsConfig_Create);
+    pModule->fn.NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize = (NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize);
+    pModule->fn.NVPW_VK_MetricsEvaluator_Initialize = (NVPERF_HOST_IMPL_NVPW_VK_MetricsEvaluator_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_MetricsEvaluator_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_VK_MetricsEvaluator_Initialize);
+    pModule->fn.NVPW_VK_Profiler_CounterDataImage_CalculateSize = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_CounterDataImage_CalculateSize", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_CounterDataImage_CalculateSize);
+    pModule->fn.NVPW_VK_Profiler_CounterDataImage_Initialize = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_CounterDataImage_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_CounterDataImage_Initialize);
+    pModule->fn.NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize);
+    pModule->fn.NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer);
+    pModule->fn.NVPW_VK_LoadDriver = (NVPERF_HOST_IMPL_NVPW_VK_LoadDriver_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_LoadDriver", (NVPA_GenericFn)pModule->fn.NVPW_VK_LoadDriver);
+    pModule->fn.NVPW_VK_Device_GetDeviceIndex = (NVPERF_HOST_IMPL_NVPW_VK_Device_GetDeviceIndex_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Device_GetDeviceIndex", (NVPA_GenericFn)pModule->fn.NVPW_VK_Device_GetDeviceIndex);
+    pModule->fn.NVPW_VK_Profiler_GetRequiredInstanceExtensions = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredInstanceExtensions_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_GetRequiredInstanceExtensions", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_GetRequiredInstanceExtensions);
+    pModule->fn.NVPW_VK_Profiler_GetRequiredDeviceExtensions = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_GetRequiredDeviceExtensions_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_GetRequiredDeviceExtensions", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_GetRequiredDeviceExtensions);
+    pModule->fn.NVPW_VK_Profiler_CalcTraceBufferSize = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_CalcTraceBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_CalcTraceBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_CalcTraceBufferSize);
+    pModule->fn.NVPW_VK_Profiler_Queue_BeginSession = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_Queue_BeginSession", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_Queue_BeginSession);
+    pModule->fn.NVPW_VK_Profiler_Queue_EndSession = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_Queue_EndSession", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_Queue_EndSession);
+    pModule->fn.NVPW_VK_Queue_ServicePendingGpuOperations = (NVPERF_HOST_IMPL_NVPW_VK_Queue_ServicePendingGpuOperations_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Queue_ServicePendingGpuOperations", (NVPA_GenericFn)pModule->fn.NVPW_VK_Queue_ServicePendingGpuOperations);
+    pModule->fn.NVPW_VK_Profiler_Queue_SetConfig = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_SetConfig_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_Queue_SetConfig", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_Queue_SetConfig);
+    pModule->fn.NVPW_VK_Profiler_Queue_ClearConfig = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_ClearConfig_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_Queue_ClearConfig", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_Queue_ClearConfig);
+    pModule->fn.NVPW_VK_Profiler_Queue_BeginPass = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_BeginPass_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_Queue_BeginPass", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_Queue_BeginPass);
+    pModule->fn.NVPW_VK_Profiler_Queue_EndPass = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_EndPass_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_Queue_EndPass", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_Queue_EndPass);
+    pModule->fn.NVPW_VK_Profiler_CommandBuffer_PushRange = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PushRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_CommandBuffer_PushRange", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_CommandBuffer_PushRange);
+    pModule->fn.NVPW_VK_Profiler_CommandBuffer_PopRange = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_CommandBuffer_PopRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_CommandBuffer_PopRange", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_CommandBuffer_PopRange);
+    pModule->fn.NVPW_VK_Profiler_Queue_DecodeCounters = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_DecodeCounters_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_Queue_DecodeCounters", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_Queue_DecodeCounters);
+    pModule->fn.NVPW_VK_Profiler_IsGpuSupported = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_IsGpuSupported_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_IsGpuSupported", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_IsGpuSupported);
+    pModule->fn.NVPW_VK_Profiler_Queue_GetCounterAvailability = (NVPERF_HOST_IMPL_NVPW_VK_Profiler_Queue_GetCounterAvailability_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_Profiler_Queue_GetCounterAvailability", (NVPA_GenericFn)pModule->fn.NVPW_VK_Profiler_Queue_GetCounterAvailability);
+    pModule->fn.NVPW_VK_MiniTrace_IsGpuSupported = (NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_IsGpuSupported_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_MiniTrace_IsGpuSupported", (NVPA_GenericFn)pModule->fn.NVPW_VK_MiniTrace_IsGpuSupported);
+    pModule->fn.NVPW_VK_MiniTrace_DeviceState_Create = (NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_MiniTrace_DeviceState_Create", (NVPA_GenericFn)pModule->fn.NVPW_VK_MiniTrace_DeviceState_Create);
+    pModule->fn.NVPW_VK_MiniTrace_DeviceState_Destroy = (NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_DeviceState_Destroy_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_MiniTrace_DeviceState_Destroy", (NVPA_GenericFn)pModule->fn.NVPW_VK_MiniTrace_DeviceState_Destroy);
+    pModule->fn.NVPW_VK_MiniTrace_Queue_Register = (NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Register_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_MiniTrace_Queue_Register", (NVPA_GenericFn)pModule->fn.NVPW_VK_MiniTrace_Queue_Register);
+    pModule->fn.NVPW_VK_MiniTrace_Queue_Unregister = (NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_Queue_Unregister_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_MiniTrace_Queue_Unregister", (NVPA_GenericFn)pModule->fn.NVPW_VK_MiniTrace_Queue_Unregister);
+    pModule->fn.NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger = (NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger", (NVPA_GenericFn)pModule->fn.NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger);
+    pModule->fn.NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu = (NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu", (NVPA_GenericFn)pModule->fn.NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu);
+    pModule->fn.NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp = (NVPERF_HOST_IMPL_NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp", (NVPA_GenericFn)pModule->fn.NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp);
+    pModule->fn.NVPW_VKSC_RawCounterConfig_Create = (NVPERF_HOST_IMPL_NVPW_VKSC_RawCounterConfig_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_RawCounterConfig_Create", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_RawCounterConfig_Create);
+    pModule->fn.NVPW_VKSC_RawMetricsConfig_Create = (NVPERF_HOST_IMPL_NVPW_VKSC_RawMetricsConfig_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_RawMetricsConfig_Create", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_RawMetricsConfig_Create);
+    pModule->fn.NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize = (NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize);
+    pModule->fn.NVPW_VKSC_MetricsEvaluator_Initialize = (NVPERF_HOST_IMPL_NVPW_VKSC_MetricsEvaluator_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_MetricsEvaluator_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_MetricsEvaluator_Initialize);
+    pModule->fn.NVPW_VKSC_Profiler_CounterDataImage_CalculateSize = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_CounterDataImage_CalculateSize", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_CounterDataImage_CalculateSize);
+    pModule->fn.NVPW_VKSC_Profiler_CounterDataImage_Initialize = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_CounterDataImage_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_CounterDataImage_Initialize);
+    pModule->fn.NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize);
+    pModule->fn.NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer);
+    pModule->fn.NVPW_VKSC_LoadDriver = (NVPERF_HOST_IMPL_NVPW_VKSC_LoadDriver_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_LoadDriver", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_LoadDriver);
+    pModule->fn.NVPW_VKSC_Device_GetDeviceIndex = (NVPERF_HOST_IMPL_NVPW_VKSC_Device_GetDeviceIndex_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Device_GetDeviceIndex", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Device_GetDeviceIndex);
+    pModule->fn.NVPW_VKSC_Profiler_GetRequiredInstanceExtensions = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredInstanceExtensions_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_GetRequiredInstanceExtensions", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_GetRequiredInstanceExtensions);
+    pModule->fn.NVPW_VKSC_Profiler_GetRequiredDeviceExtensions = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetRequiredDeviceExtensions_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_GetRequiredDeviceExtensions", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_GetRequiredDeviceExtensions);
+    pModule->fn.NVPW_VKSC_Profiler_CalcTraceBufferSize = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcTraceBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_CalcTraceBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_CalcTraceBufferSize);
+    pModule->fn.NVPW_VKSC_Profiler_CalcPerfmonBufferSize = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CalcPerfmonBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_CalcPerfmonBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_CalcPerfmonBufferSize);
+    pModule->fn.NVPW_VKSC_Profiler_GetDeviceObjectReservation = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_GetDeviceObjectReservation_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_GetDeviceObjectReservation", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_GetDeviceObjectReservation);
+    pModule->fn.NVPW_VKSC_Profiler_Queue_BeginSession = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_Queue_BeginSession", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_Queue_BeginSession);
+    pModule->fn.NVPW_VKSC_Profiler_Queue_EndSession = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_Queue_EndSession", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_Queue_EndSession);
+    pModule->fn.NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations);
+    pModule->fn.NVPW_VKSC_Profiler_Queue_SetConfig = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_SetConfig_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_Queue_SetConfig", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_Queue_SetConfig);
+    pModule->fn.NVPW_VKSC_Profiler_Queue_ClearConfig = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_ClearConfig_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_Queue_ClearConfig", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_Queue_ClearConfig);
+    pModule->fn.NVPW_VKSC_Profiler_Queue_BeginPass = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_BeginPass_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_Queue_BeginPass", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_Queue_BeginPass);
+    pModule->fn.NVPW_VKSC_Profiler_Queue_EndPass = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_EndPass_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_Queue_EndPass", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_Queue_EndPass);
+    pModule->fn.NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics);
+    pModule->fn.NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics);
+    pModule->fn.NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute);
+    pModule->fn.NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute);
+    pModule->fn.NVPW_VKSC_Profiler_Queue_InitializeRangeCommands = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_InitializeRangeCommands_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_Queue_InitializeRangeCommands", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_Queue_InitializeRangeCommands);
+    pModule->fn.NVPW_VKSC_Profiler_Queue_DecodeCounters = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_Queue_DecodeCounters_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_Queue_DecodeCounters", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_Queue_DecodeCounters);
+    pModule->fn.NVPW_VKSC_Profiler_IsGpuSupported = (NVPERF_HOST_IMPL_NVPW_VKSC_Profiler_IsGpuSupported_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_VKSC_Profiler_IsGpuSupported", (NVPA_GenericFn)pModule->fn.NVPW_VKSC_Profiler_IsGpuSupported);
+    pModule->fn.NVPW_OpenGL_RawMetricsConfig_Create = (NVPERF_HOST_IMPL_NVPW_OpenGL_RawMetricsConfig_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_RawMetricsConfig_Create", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_RawMetricsConfig_Create);
+    pModule->fn.NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize = (NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize);
+    pModule->fn.NVPW_OpenGL_MetricsEvaluator_Initialize = (NVPERF_HOST_IMPL_NVPW_OpenGL_MetricsEvaluator_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_MetricsEvaluator_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_MetricsEvaluator_Initialize);
+    pModule->fn.NVPW_OpenGL_RawCounterConfig_Create = (NVPERF_HOST_IMPL_NVPW_OpenGL_RawCounterConfig_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_RawCounterConfig_Create", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_RawCounterConfig_Create);
+    pModule->fn.NVPW_OpenGL_LoadDriver = (NVPERF_HOST_IMPL_NVPW_OpenGL_LoadDriver_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_LoadDriver", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_LoadDriver);
+    pModule->fn.NVPW_OpenGL_GetCurrentGraphicsContext = (NVPERF_HOST_IMPL_NVPW_OpenGL_GetCurrentGraphicsContext_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_GetCurrentGraphicsContext", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_GetCurrentGraphicsContext);
+    pModule->fn.NVPW_OpenGL_GraphicsContext_GetDeviceIndex = (NVPERF_HOST_IMPL_NVPW_OpenGL_GraphicsContext_GetDeviceIndex_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_GraphicsContext_GetDeviceIndex", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_GraphicsContext_GetDeviceIndex);
+    pModule->fn.NVPW_OpenGL_Profiler_IsGpuSupported = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_IsGpuSupported_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_IsGpuSupported", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_IsGpuSupported);
+    pModule->fn.NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize);
+    pModule->fn.NVPW_OpenGL_Profiler_CounterDataImage_Initialize = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_CounterDataImage_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_CounterDataImage_Initialize);
+    pModule->fn.NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize);
+    pModule->fn.NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer);
+    pModule->fn.NVPW_OpenGL_Profiler_CalcTraceBufferSize = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_CalcTraceBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_CalcTraceBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_CalcTraceBufferSize);
+    pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_BeginSession = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_GraphicsContext_BeginSession", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_BeginSession);
+    pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_EndSession = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_GraphicsContext_EndSession", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_EndSession);
+    pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_SetConfig = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_SetConfig_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_GraphicsContext_SetConfig", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_SetConfig);
+    pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig);
+    pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_BeginPass = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_BeginPass_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_GraphicsContext_BeginPass", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_BeginPass);
+    pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_EndPass = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_EndPass_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_GraphicsContext_EndPass", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_EndPass);
+    pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_PushRange = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PushRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_GraphicsContext_PushRange", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_PushRange);
+    pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_PopRange = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_PopRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_GraphicsContext_PopRange", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_PopRange);
+    pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters);
+    pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability = (NVPERF_HOST_IMPL_NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability", (NVPA_GenericFn)pModule->fn.NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability);
+    pModule->fn.NVPW_EGL_RawMetricsConfig_Create = (NVPERF_HOST_IMPL_NVPW_EGL_RawMetricsConfig_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_RawMetricsConfig_Create", (NVPA_GenericFn)pModule->fn.NVPW_EGL_RawMetricsConfig_Create);
+    pModule->fn.NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize = (NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize);
+    pModule->fn.NVPW_EGL_MetricsEvaluator_Initialize = (NVPERF_HOST_IMPL_NVPW_EGL_MetricsEvaluator_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_MetricsEvaluator_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_EGL_MetricsEvaluator_Initialize);
+    pModule->fn.NVPW_EGL_RawCounterConfig_Create = (NVPERF_HOST_IMPL_NVPW_EGL_RawCounterConfig_Create_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_RawCounterConfig_Create", (NVPA_GenericFn)pModule->fn.NVPW_EGL_RawCounterConfig_Create);
+    pModule->fn.NVPW_EGL_LoadDriver = (NVPERF_HOST_IMPL_NVPW_EGL_LoadDriver_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_LoadDriver", (NVPA_GenericFn)pModule->fn.NVPW_EGL_LoadDriver);
+    pModule->fn.NVPW_EGL_GetCurrentGraphicsContext = (NVPERF_HOST_IMPL_NVPW_EGL_GetCurrentGraphicsContext_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_GetCurrentGraphicsContext", (NVPA_GenericFn)pModule->fn.NVPW_EGL_GetCurrentGraphicsContext);
+    pModule->fn.NVPW_EGL_GraphicsContext_GetDeviceIndex = (NVPERF_HOST_IMPL_NVPW_EGL_GraphicsContext_GetDeviceIndex_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_GraphicsContext_GetDeviceIndex", (NVPA_GenericFn)pModule->fn.NVPW_EGL_GraphicsContext_GetDeviceIndex);
+    pModule->fn.NVPW_EGL_Profiler_IsGpuSupported = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_IsGpuSupported_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_IsGpuSupported", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_IsGpuSupported);
+    pModule->fn.NVPW_EGL_Profiler_CounterDataImage_CalculateSize = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_CounterDataImage_CalculateSize", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_CounterDataImage_CalculateSize);
+    pModule->fn.NVPW_EGL_Profiler_CounterDataImage_Initialize = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_Initialize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_CounterDataImage_Initialize", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_CounterDataImage_Initialize);
+    pModule->fn.NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize);
+    pModule->fn.NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer);
+    pModule->fn.NVPW_EGL_Profiler_CalcTraceBufferSize = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_CalcTraceBufferSize_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_CalcTraceBufferSize", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_CalcTraceBufferSize);
+    pModule->fn.NVPW_EGL_Profiler_GraphicsContext_BeginSession = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_GraphicsContext_BeginSession", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_GraphicsContext_BeginSession);
+    pModule->fn.NVPW_EGL_Profiler_GraphicsContext_EndSession = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndSession_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_GraphicsContext_EndSession", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_GraphicsContext_EndSession);
+    pModule->fn.NVPW_EGL_Profiler_GraphicsContext_SetConfig = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_SetConfig_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_GraphicsContext_SetConfig", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_GraphicsContext_SetConfig);
+    pModule->fn.NVPW_EGL_Profiler_GraphicsContext_ClearConfig = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_ClearConfig_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_GraphicsContext_ClearConfig", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_GraphicsContext_ClearConfig);
+    pModule->fn.NVPW_EGL_Profiler_GraphicsContext_BeginPass = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_BeginPass_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_GraphicsContext_BeginPass", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_GraphicsContext_BeginPass);
+    pModule->fn.NVPW_EGL_Profiler_GraphicsContext_EndPass = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_EndPass_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_GraphicsContext_EndPass", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_GraphicsContext_EndPass);
+    pModule->fn.NVPW_EGL_Profiler_GraphicsContext_PushRange = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PushRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_GraphicsContext_PushRange", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_GraphicsContext_PushRange);
+    pModule->fn.NVPW_EGL_Profiler_GraphicsContext_PopRange = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_PopRange_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_GraphicsContext_PopRange", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_GraphicsContext_PopRange);
+    pModule->fn.NVPW_EGL_Profiler_GraphicsContext_DecodeCounters = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_DecodeCounters_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_GraphicsContext_DecodeCounters", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_GraphicsContext_DecodeCounters);
+    pModule->fn.NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability = (NVPERF_HOST_IMPL_NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability_Fn)NVPERF_HOST_IMPL_GetNvPerfProc("NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability", (NVPA_GenericFn)pModule->fn.NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability);
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_InitializeHost_Default(NVPW_InitializeHost_Params* pParams)
+{
+    NVPERF_HOST_IMPL_Module* pModule = NVPERF_HOST_IMPL_GetModule();
+    NVPERF_HOST_IMPL_InitNvPerf();
+    if (pModule->fn.NVPW_InitializeHost != &NVPERF_HOST_IMPL_NVPW_InitializeHost_Default && pModule->fn.NVPW_InitializeHost != &NVPW_InitializeHost)
+    {
+        return pModule->fn.NVPW_InitializeHost(pParams);
+    }
+    return pModule->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_InitializeTarget_Default(NVPW_InitializeTarget_Params* pParams)
+{
+    NVPERF_HOST_IMPL_Module* pModule = NVPERF_HOST_IMPL_GetModule();
+    NVPERF_HOST_IMPL_InitNvPerf();
+    if (pModule->fn.NVPW_InitializeTarget != &NVPERF_HOST_IMPL_NVPW_InitializeTarget_Default && pModule->fn.NVPW_InitializeTarget != &NVPW_InitializeTarget)
+    {
+        return pModule->fn.NVPW_InitializeTarget(pParams);
+    }
+    return pModule->defaultStatus;
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_GenericFn NVPA_GetProcAddress(const char* pFunctionName)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPA_GetProcAddress(pFunctionName);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_SetLibraryLoadPaths(NVPW_SetLibraryLoadPaths_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_SetLibraryLoadPaths(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_SetLibraryLoadPathsW(NVPW_SetLibraryLoadPathsW_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_SetLibraryLoadPathsW(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_InitializeHost(NVPW_InitializeHost_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_InitializeHost(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GetSupportedChipNames(NVPW_GetSupportedChipNames_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GetSupportedChipNames(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_Destroy(NVPW_RawMetricsConfig_Destroy_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_Destroy(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_SetCounterAvailability(NVPW_RawMetricsConfig_SetCounterAvailability_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_SetCounterAvailability(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_BeginPassGroup(NVPW_RawMetricsConfig_BeginPassGroup_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_BeginPassGroup(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_EndPassGroup(NVPW_RawMetricsConfig_EndPassGroup_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_EndPassGroup(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_GetNumMetrics(NVPW_RawMetricsConfig_GetNumMetrics_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_GetNumMetrics(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_GetMetricProperties_V2(NVPW_RawMetricsConfig_GetMetricProperties_V2_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_GetMetricProperties_V2(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_AddMetrics(NVPW_RawMetricsConfig_AddMetrics_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_AddMetrics(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_IsAddMetricsPossible(NVPW_RawMetricsConfig_IsAddMetricsPossible_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_IsAddMetricsPossible(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_GenerateConfigImage(NVPW_RawMetricsConfig_GenerateConfigImage_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_GenerateConfigImage(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_GetConfigImage(NVPW_RawMetricsConfig_GetConfigImage_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_GetConfigImage(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawMetricsConfig_GetNumPasses_V2(NVPW_RawMetricsConfig_GetNumPasses_V2_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawMetricsConfig_GetNumPasses_V2(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_RawCounterDomainToString(NVPW_RawCounterConfig_RawCounterDomainToString_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_RawCounterDomainToString(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_StringToRawCounterDomain(NVPW_RawCounterConfig_StringToRawCounterDomain_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_StringToRawCounterDomain(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_GetSupportedChipNames(NVPW_RawCounterConfig_GetSupportedChipNames_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_GetSupportedChipNames(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_Destroy(NVPW_RawCounterConfig_Destroy_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_Destroy(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_SetCounterAvailability(NVPW_RawCounterConfig_SetCounterAvailability_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_SetCounterAvailability(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains(NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups(NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_IsCooperativeDomainGroup(NVPW_RawCounterConfig_IsCooperativeDomainGroup_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_IsCooperativeDomainGroup(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains(NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_BeginPassGroup(NVPW_RawCounterConfig_BeginPassGroup_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_BeginPassGroup(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_EndPassGroup(NVPW_RawCounterConfig_EndPassGroup_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_EndPassGroup(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_GetNumRawCounters(NVPW_RawCounterConfig_GetNumRawCounters_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_GetNumRawCounters(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_GetRawCounterName(NVPW_RawCounterConfig_GetRawCounterName_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_GetRawCounterName(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_GetRawCounterProperties(NVPW_RawCounterConfig_GetRawCounterProperties_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_GetRawCounterProperties(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_AddRawCounters(NVPW_RawCounterConfig_AddRawCounters_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_AddRawCounters(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_AreRawCountersSchedulable(NVPW_RawCounterConfig_AreRawCountersSchedulable_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_AreRawCountersSchedulable(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_MergePassGroups(NVPW_RawCounterConfig_MergePassGroups_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_MergePassGroups(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_GenerateConfigImage(NVPW_RawCounterConfig_GenerateConfigImage_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_GenerateConfigImage(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_GetConfigImage(NVPW_RawCounterConfig_GetConfigImage_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_GetConfigImage(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_RawCounterConfig_GetNumPasses(NVPW_RawCounterConfig_GetNumPasses_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_RawCounterConfig_GetNumPasses(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Config_GetRawCounterInfo(NVPW_Config_GetRawCounterInfo_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Config_GetRawCounterInfo(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Config_GetRawCounters(NVPW_Config_GetRawCounters_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Config_GetRawCounters(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize(NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize(NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_Destroy(NVPW_MetricsEvaluator_Destroy_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_Destroy(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_GetMetricNames(NVPW_MetricsEvaluator_GetMetricNames_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_GetMetricNames(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_GetMetricTypeAndIndex(NVPW_MetricsEvaluator_GetMetricTypeAndIndex_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_GetMetricTypeAndIndex(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest(NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_HwUnitToString(NVPW_MetricsEvaluator_HwUnitToString_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_HwUnitToString(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_GetCounterProperties(NVPW_MetricsEvaluator_GetCounterProperties_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_GetCounterProperties(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_GetRatioMetricProperties(NVPW_MetricsEvaluator_GetRatioMetricProperties_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_GetRatioMetricProperties(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_GetThroughputMetricProperties(NVPW_MetricsEvaluator_GetThroughputMetricProperties_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_GetThroughputMetricProperties(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_GetSupportedSubmetrics(NVPW_MetricsEvaluator_GetSupportedSubmetrics_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_GetSupportedSubmetrics(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_GetMetricRawDependencies(NVPW_MetricsEvaluator_GetMetricRawDependencies_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_GetMetricRawDependencies(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_DimUnitToString(NVPW_MetricsEvaluator_DimUnitToString_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_DimUnitToString(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_GetMetricDimUnits(NVPW_MetricsEvaluator_GetMetricDimUnits_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_GetMetricDimUnits(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_SetUserData(NVPW_MetricsEvaluator_SetUserData_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_SetUserData(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_EvaluateToGpuValues(NVPW_MetricsEvaluator_EvaluateToGpuValues_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_EvaluateToGpuValues(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_SetDeviceAttributes(NVPW_MetricsEvaluator_SetDeviceAttributes_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_SetDeviceAttributes(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize(NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString(NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_UserDefinedMetrics_Commit(NVPW_MetricsEvaluator_UserDefinedMetrics_Commit_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_Commit(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames(NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterData_CalculateCounterDataImageCopySize(NVPW_CounterData_CalculateCounterDataImageCopySize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterData_CalculateCounterDataImageCopySize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterData_InitializeCounterDataImageCopy(NVPW_CounterData_InitializeCounterDataImageCopy_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterData_InitializeCounterDataImageCopy(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterData_ExtractCounterDataPrefix(NVPW_CounterData_ExtractCounterDataPrefix_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterData_ExtractCounterDataPrefix(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataCombiner_Create(NVPW_CounterDataCombiner_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataCombiner_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataCombiner_Destroy(NVPW_CounterDataCombiner_Destroy_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataCombiner_Destroy(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataCombiner_CreateRange(NVPW_CounterDataCombiner_CreateRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataCombiner_CreateRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataCombiner_CopyIntoRange(NVPW_CounterDataCombiner_CopyIntoRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataCombiner_CopyIntoRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataCombiner_AccumulateIntoRange(NVPW_CounterDataCombiner_AccumulateIntoRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataCombiner_AccumulateIntoRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataCombiner_SumIntoRange(NVPW_CounterDataCombiner_SumIntoRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataCombiner_SumIntoRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataCombiner_WeightedSumIntoRange(NVPW_CounterDataCombiner_WeightedSumIntoRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataCombiner_WeightedSumIntoRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataBuilder_Create(NVPW_CounterDataBuilder_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataBuilder_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataBuilder_Destroy(NVPW_CounterDataBuilder_Destroy_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataBuilder_Destroy(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataBuilder_AddMetrics(NVPW_CounterDataBuilder_AddMetrics_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataBuilder_AddMetrics(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataBuilder_AddRawCounters(NVPW_CounterDataBuilder_AddRawCounters_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataBuilder_AddRawCounters(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterDataBuilder_GetCounterDataPrefix(NVPW_CounterDataBuilder_GetCounterDataPrefix_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterDataBuilder_GetCounterDataPrefix(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_InitializeTarget(NVPW_InitializeTarget_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_InitializeTarget(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GetDeviceCount(NVPW_GetDeviceCount_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GetDeviceCount(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Device_GetNames(NVPW_Device_GetNames_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Device_GetNames(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Device_GetUUID(NVPW_Device_GetUUID_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Device_GetUUID(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Device_GetPciBusIds(NVPW_Device_GetPciBusIds_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Device_GetPciBusIds(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Device_GetMigAttributes(NVPW_Device_GetMigAttributes_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Device_GetMigAttributes(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Adapter_GetDeviceIndex(NVPW_Adapter_GetDeviceIndex_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Adapter_GetDeviceIndex(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterData_GetNumRanges(NVPW_CounterData_GetNumRanges_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterData_GetNumRanges(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterData_GetChipName(NVPW_CounterData_GetChipName_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterData_GetChipName(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Config_GetNumPasses_V2(NVPW_Config_GetNumPasses_V2_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Config_GetNumPasses_V2(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_QueryVersionNumber(NVPW_QueryVersionNumber_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_QueryVersionNumber(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Device_GetClockStatus(NVPW_Device_GetClockStatus_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Device_GetClockStatus(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Device_SetClockSetting(NVPW_Device_SetClockSetting_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Device_SetClockSetting(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_ThrottlingDetector_GetState(NVPW_ThrottlingDetector_GetState_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_ThrottlingDetector_GetState(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_ThrottlingDetector_BeginSession(NVPW_ThrottlingDetector_BeginSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_ThrottlingDetector_BeginSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_ThrottlingDetector_Sample(NVPW_ThrottlingDetector_Sample_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_ThrottlingDetector_Sample(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_ThrottlingDetector_EndSession(NVPW_ThrottlingDetector_EndSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_ThrottlingDetector_EndSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_CounterData_GetRangeDescriptions(NVPW_CounterData_GetRangeDescriptions_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_CounterData_GetRangeDescriptions(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Profiler_CounterData_GetRangeDescriptions(NVPW_Profiler_CounterData_GetRangeDescriptions_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Profiler_CounterData_GetRangeDescriptions(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_PeriodicSampler_CounterData_GetSampleTime(NVPW_PeriodicSampler_CounterData_GetSampleTime_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_PeriodicSampler_CounterData_GetSampleTime(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_PeriodicSampler_CounterData_TrimInPlace(NVPW_PeriodicSampler_CounterData_TrimInPlace_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_PeriodicSampler_CounterData_TrimInPlace(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_PeriodicSampler_CounterData_GetInfo(NVPW_PeriodicSampler_CounterData_GetInfo_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_PeriodicSampler_CounterData_GetInfo(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_PeriodicSampler_CounterData_GetTriggerCount(NVPW_PeriodicSampler_CounterData_GetTriggerCount_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_PeriodicSampler_CounterData_GetTriggerCount(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_PeriodicSampler_CounterData_IsDataComplete(NVPW_PeriodicSampler_CounterData_IsDataComplete_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_PeriodicSampler_CounterData_IsDataComplete(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Device_RawCounterConfig_Create(NVPW_Device_RawCounterConfig_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Device_RawCounterConfig_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Device_RawMetricsConfig_Create(NVPW_Device_RawMetricsConfig_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Device_RawMetricsConfig_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize(NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_Device_MetricsEvaluator_Initialize(NVPW_Device_MetricsEvaluator_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_Device_MetricsEvaluator_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_IsGpuSupported(NVPW_GPU_PeriodicSampler_IsGpuSupported_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_IsGpuSupported(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources(NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize(NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_BeginSession(NVPW_GPU_PeriodicSampler_BeginSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_BeginSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_BeginSession_V2(NVPW_GPU_PeriodicSampler_BeginSession_V2_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_BeginSession_V2(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_EndSession(NVPW_GPU_PeriodicSampler_EndSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_EndSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_GetCounterAvailability(NVPW_GPU_PeriodicSampler_GetCounterAvailability_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_GetCounterAvailability(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_SetConfig(NVPW_GPU_PeriodicSampler_SetConfig_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_SetConfig(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_StartSampling(NVPW_GPU_PeriodicSampler_StartSampling_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_StartSampling(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_StopSampling(NVPW_GPU_PeriodicSampler_StopSampling_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_StopSampling(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_CpuTrigger(NVPW_GPU_PeriodicSampler_CpuTrigger_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_CpuTrigger(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize(NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize(NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_GetRecordBufferStatus(NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_GetRecordBufferStatus(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_DecodeCounters(NVPW_GPU_PeriodicSampler_DecodeCounters_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_DecodeCounters(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_DecodeCounters_V2(NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_DecodeCounters_V2(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported(NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2(NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_GetGpuTimestamp(NVPW_GPU_PeriodicSampler_GetGpuTimestamp_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_GetGpuTimestamp(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer(NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset(NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_DecodeCounters_V3(NVPW_GPU_PeriodicSampler_DecodeCounters_V3_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_DecodeCounters_V3(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_GPU_PeriodicSampler_ResetDecoderState(NVPW_GPU_PeriodicSampler_ResetDecoderState_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_GPU_PeriodicSampler_ResetDecoderState(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_RawCounterConfig_Create(NVPW_VK_RawCounterConfig_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_RawCounterConfig_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_RawMetricsConfig_Create(NVPW_VK_RawMetricsConfig_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_RawMetricsConfig_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize(NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_MetricsEvaluator_Initialize(NVPW_VK_MetricsEvaluator_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_MetricsEvaluator_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_CounterDataImage_CalculateSize(NVPW_VK_Profiler_CounterDataImage_CalculateSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_CounterDataImage_CalculateSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_CounterDataImage_Initialize(NVPW_VK_Profiler_CounterDataImage_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_CounterDataImage_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize(NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer(NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_LoadDriver(NVPW_VK_LoadDriver_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_LoadDriver(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Device_GetDeviceIndex(NVPW_VK_Device_GetDeviceIndex_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Device_GetDeviceIndex(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_GetRequiredInstanceExtensions(NVPW_VK_Profiler_GetRequiredInstanceExtensions_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_GetRequiredInstanceExtensions(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_GetRequiredDeviceExtensions(NVPW_VK_Profiler_GetRequiredDeviceExtensions_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_GetRequiredDeviceExtensions(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_CalcTraceBufferSize(NVPW_VK_Profiler_CalcTraceBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_CalcTraceBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_Queue_BeginSession(NVPW_VK_Profiler_Queue_BeginSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_Queue_BeginSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_Queue_EndSession(NVPW_VK_Profiler_Queue_EndSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_Queue_EndSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Queue_ServicePendingGpuOperations(NVPW_VK_Queue_ServicePendingGpuOperations_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Queue_ServicePendingGpuOperations(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_Queue_SetConfig(NVPW_VK_Profiler_Queue_SetConfig_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_Queue_SetConfig(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_Queue_ClearConfig(NVPW_VK_Profiler_Queue_ClearConfig_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_Queue_ClearConfig(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_Queue_BeginPass(NVPW_VK_Profiler_Queue_BeginPass_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_Queue_BeginPass(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_Queue_EndPass(NVPW_VK_Profiler_Queue_EndPass_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_Queue_EndPass(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_CommandBuffer_PushRange(NVPW_VK_Profiler_CommandBuffer_PushRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_CommandBuffer_PushRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_CommandBuffer_PopRange(NVPW_VK_Profiler_CommandBuffer_PopRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_CommandBuffer_PopRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_Queue_DecodeCounters(NVPW_VK_Profiler_Queue_DecodeCounters_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_Queue_DecodeCounters(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_IsGpuSupported(NVPW_VK_Profiler_IsGpuSupported_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_IsGpuSupported(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_Profiler_Queue_GetCounterAvailability(NVPW_VK_Profiler_Queue_GetCounterAvailability_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_Profiler_Queue_GetCounterAvailability(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_MiniTrace_IsGpuSupported(NVPW_VK_MiniTrace_IsGpuSupported_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_MiniTrace_IsGpuSupported(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_MiniTrace_DeviceState_Create(NVPW_VK_MiniTrace_DeviceState_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_MiniTrace_DeviceState_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_MiniTrace_DeviceState_Destroy(NVPW_VK_MiniTrace_DeviceState_Destroy_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_MiniTrace_DeviceState_Destroy(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_MiniTrace_Queue_Register(NVPW_VK_MiniTrace_Queue_Register_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_MiniTrace_Queue_Register(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_MiniTrace_Queue_Unregister(NVPW_VK_MiniTrace_Queue_Unregister_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_MiniTrace_Queue_Unregister(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger(NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu(NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp(NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_RawCounterConfig_Create(NVPW_VKSC_RawCounterConfig_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_RawCounterConfig_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_RawMetricsConfig_Create(NVPW_VKSC_RawMetricsConfig_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_RawMetricsConfig_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize(NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_MetricsEvaluator_Initialize(NVPW_VKSC_MetricsEvaluator_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_MetricsEvaluator_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_CounterDataImage_CalculateSize(NVPW_VKSC_Profiler_CounterDataImage_CalculateSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_CounterDataImage_CalculateSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_CounterDataImage_Initialize(NVPW_VKSC_Profiler_CounterDataImage_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_CounterDataImage_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize(NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer(NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_LoadDriver(NVPW_VKSC_LoadDriver_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_LoadDriver(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Device_GetDeviceIndex(NVPW_VKSC_Device_GetDeviceIndex_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Device_GetDeviceIndex(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_GetRequiredInstanceExtensions(NVPW_VKSC_Profiler_GetRequiredInstanceExtensions_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_GetRequiredInstanceExtensions(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_GetRequiredDeviceExtensions(NVPW_VKSC_Profiler_GetRequiredDeviceExtensions_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_GetRequiredDeviceExtensions(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_CalcTraceBufferSize(NVPW_VKSC_Profiler_CalcTraceBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_CalcTraceBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_CalcPerfmonBufferSize(NVPW_VKSC_Profiler_CalcPerfmonBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_CalcPerfmonBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_GetDeviceObjectReservation(NVPW_VKSC_Profiler_GetDeviceObjectReservation_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_GetDeviceObjectReservation(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_Queue_BeginSession(NVPW_VKSC_Profiler_Queue_BeginSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_Queue_BeginSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_Queue_EndSession(NVPW_VKSC_Profiler_Queue_EndSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_Queue_EndSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations(NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_Queue_SetConfig(NVPW_VKSC_Profiler_Queue_SetConfig_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_Queue_SetConfig(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_Queue_ClearConfig(NVPW_VKSC_Profiler_Queue_ClearConfig_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_Queue_ClearConfig(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_Queue_BeginPass(NVPW_VKSC_Profiler_Queue_BeginPass_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_Queue_BeginPass(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_Queue_EndPass(NVPW_VKSC_Profiler_Queue_EndPass_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_Queue_EndPass(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics(NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics(NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute(NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute(NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_Queue_InitializeRangeCommands(NVPW_VKSC_Profiler_Queue_InitializeRangeCommands_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_Queue_InitializeRangeCommands(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_Queue_DecodeCounters(NVPW_VKSC_Profiler_Queue_DecodeCounters_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_Queue_DecodeCounters(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_VKSC_Profiler_IsGpuSupported(NVPW_VKSC_Profiler_IsGpuSupported_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_VKSC_Profiler_IsGpuSupported(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_RawMetricsConfig_Create(NVPW_OpenGL_RawMetricsConfig_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_RawMetricsConfig_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize(NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_MetricsEvaluator_Initialize(NVPW_OpenGL_MetricsEvaluator_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_MetricsEvaluator_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_RawCounterConfig_Create(NVPW_OpenGL_RawCounterConfig_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_RawCounterConfig_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_LoadDriver(NVPW_OpenGL_LoadDriver_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_LoadDriver(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_GetCurrentGraphicsContext(NVPW_OpenGL_GetCurrentGraphicsContext_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_GetCurrentGraphicsContext(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_GraphicsContext_GetDeviceIndex(NVPW_OpenGL_GraphicsContext_GetDeviceIndex_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_GraphicsContext_GetDeviceIndex(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_IsGpuSupported(NVPW_OpenGL_Profiler_IsGpuSupported_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_IsGpuSupported(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize(NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_CounterDataImage_Initialize(NVPW_OpenGL_Profiler_CounterDataImage_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_CounterDataImage_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize(NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer(NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_CalcTraceBufferSize(NVPW_OpenGL_Profiler_CalcTraceBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_CalcTraceBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_GraphicsContext_BeginSession(NVPW_OpenGL_Profiler_GraphicsContext_BeginSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_GraphicsContext_BeginSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_GraphicsContext_EndSession(NVPW_OpenGL_Profiler_GraphicsContext_EndSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_GraphicsContext_EndSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_GraphicsContext_SetConfig(NVPW_OpenGL_Profiler_GraphicsContext_SetConfig_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_GraphicsContext_SetConfig(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig(NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_GraphicsContext_BeginPass(NVPW_OpenGL_Profiler_GraphicsContext_BeginPass_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_GraphicsContext_BeginPass(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_GraphicsContext_EndPass(NVPW_OpenGL_Profiler_GraphicsContext_EndPass_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_GraphicsContext_EndPass(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_GraphicsContext_PushRange(NVPW_OpenGL_Profiler_GraphicsContext_PushRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_GraphicsContext_PushRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_GraphicsContext_PopRange(NVPW_OpenGL_Profiler_GraphicsContext_PopRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_GraphicsContext_PopRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters(NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability(NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_RawMetricsConfig_Create(NVPW_EGL_RawMetricsConfig_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_RawMetricsConfig_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize(NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_MetricsEvaluator_Initialize(NVPW_EGL_MetricsEvaluator_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_MetricsEvaluator_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_RawCounterConfig_Create(NVPW_EGL_RawCounterConfig_Create_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_RawCounterConfig_Create(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_LoadDriver(NVPW_EGL_LoadDriver_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_LoadDriver(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_GetCurrentGraphicsContext(NVPW_EGL_GetCurrentGraphicsContext_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_GetCurrentGraphicsContext(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_GraphicsContext_GetDeviceIndex(NVPW_EGL_GraphicsContext_GetDeviceIndex_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_GraphicsContext_GetDeviceIndex(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_IsGpuSupported(NVPW_EGL_Profiler_IsGpuSupported_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_IsGpuSupported(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_CounterDataImage_CalculateSize(NVPW_EGL_Profiler_CounterDataImage_CalculateSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_CounterDataImage_CalculateSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_CounterDataImage_Initialize(NVPW_EGL_Profiler_CounterDataImage_Initialize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_CounterDataImage_Initialize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize(NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer(NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_CalcTraceBufferSize(NVPW_EGL_Profiler_CalcTraceBufferSize_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_CalcTraceBufferSize(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_GraphicsContext_BeginSession(NVPW_EGL_Profiler_GraphicsContext_BeginSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_GraphicsContext_BeginSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_GraphicsContext_EndSession(NVPW_EGL_Profiler_GraphicsContext_EndSession_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_GraphicsContext_EndSession(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_GraphicsContext_SetConfig(NVPW_EGL_Profiler_GraphicsContext_SetConfig_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_GraphicsContext_SetConfig(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_GraphicsContext_ClearConfig(NVPW_EGL_Profiler_GraphicsContext_ClearConfig_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_GraphicsContext_ClearConfig(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_GraphicsContext_BeginPass(NVPW_EGL_Profiler_GraphicsContext_BeginPass_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_GraphicsContext_BeginPass(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_GraphicsContext_EndPass(NVPW_EGL_Profiler_GraphicsContext_EndPass_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_GraphicsContext_EndPass(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_GraphicsContext_PushRange(NVPW_EGL_Profiler_GraphicsContext_PushRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_GraphicsContext_PushRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_GraphicsContext_PopRange(NVPW_EGL_Profiler_GraphicsContext_PopRange_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_GraphicsContext_PopRange(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_GraphicsContext_DecodeCounters(NVPW_EGL_Profiler_GraphicsContext_DecodeCounters_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_GraphicsContext_DecodeCounters(pParams);
+}
+NVPERF_HOST_IMPL_FN NVPERF_HOST_IMPL_API_VISIBILITY NVPA_Status NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability(NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability_Params* pParams)
+{
+    return NVPERF_HOST_IMPL_GetModule()->fn.NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability(pParams);
+}
+
+#if NVPERF_HOST_IMPL_FN_EMITTED_IF_USED
+NVPERF_HOST_IMPL_DATA NVPERF_HOST_IMPL_ApiFunctions NVPERF_HOST_IMPL_g_wrappers = {
+        &NVPA_GetProcAddress
+      , &NVPW_SetLibraryLoadPaths
+      , &NVPW_SetLibraryLoadPathsW
+      , &NVPW_InitializeHost
+      , &NVPW_GetSupportedChipNames
+      , &NVPW_RawMetricsConfig_Destroy
+      , &NVPW_RawMetricsConfig_SetCounterAvailability
+      , &NVPW_RawMetricsConfig_BeginPassGroup
+      , &NVPW_RawMetricsConfig_EndPassGroup
+      , &NVPW_RawMetricsConfig_GetNumMetrics
+      , &NVPW_RawMetricsConfig_GetMetricProperties_V2
+      , &NVPW_RawMetricsConfig_AddMetrics
+      , &NVPW_RawMetricsConfig_IsAddMetricsPossible
+      , &NVPW_RawMetricsConfig_GenerateConfigImage
+      , &NVPW_RawMetricsConfig_GetConfigImage
+      , &NVPW_RawMetricsConfig_GetNumPasses_V2
+      , &NVPW_RawCounterConfig_RawCounterDomainToString
+      , &NVPW_RawCounterConfig_StringToRawCounterDomain
+      , &NVPW_RawCounterConfig_GetSupportedChipNames
+      , &NVPW_RawCounterConfig_Destroy
+      , &NVPW_RawCounterConfig_SetCounterAvailability
+      , &NVPW_RawCounterConfig_GetAllAvailableRawCounterDomains
+      , &NVPW_RawCounterConfig_GetAllAvailableCooperativeDomainGroups
+      , &NVPW_RawCounterConfig_IsCooperativeDomainGroup
+      , &NVPW_RawCounterConfig_CooperativeDomainGroup_GetMemberDomains
+      , &NVPW_RawCounterConfig_BeginPassGroup
+      , &NVPW_RawCounterConfig_EndPassGroup
+      , &NVPW_RawCounterConfig_GetNumRawCounters
+      , &NVPW_RawCounterConfig_GetRawCounterName
+      , &NVPW_RawCounterConfig_GetRawCounterProperties
+      , &NVPW_RawCounterConfig_AddRawCounters
+      , &NVPW_RawCounterConfig_AreRawCountersSchedulable
+      , &NVPW_RawCounterConfig_MergePassGroups
+      , &NVPW_RawCounterConfig_GenerateConfigImage
+      , &NVPW_RawCounterConfig_GetConfigImage
+      , &NVPW_RawCounterConfig_GetNumPasses
+      , &NVPW_Config_GetRawCounterInfo
+      , &NVPW_Config_GetRawCounters
+      , &NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize
+      , &NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize
+      , &NVPW_MetricsEvaluator_Destroy
+      , &NVPW_MetricsEvaluator_GetMetricNames
+      , &NVPW_MetricsEvaluator_GetMetricTypeAndIndex
+      , &NVPW_MetricsEvaluator_ConvertMetricNameToMetricEvalRequest
+      , &NVPW_MetricsEvaluator_HwUnitToString
+      , &NVPW_MetricsEvaluator_GetCounterProperties
+      , &NVPW_MetricsEvaluator_GetRatioMetricProperties
+      , &NVPW_MetricsEvaluator_GetThroughputMetricProperties
+      , &NVPW_MetricsEvaluator_GetSupportedSubmetrics
+      , &NVPW_MetricsEvaluator_GetMetricRawDependencies
+      , &NVPW_MetricsEvaluator_DimUnitToString
+      , &NVPW_MetricsEvaluator_GetMetricDimUnits
+      , &NVPW_MetricsEvaluator_SetUserData
+      , &NVPW_MetricsEvaluator_EvaluateToGpuValues
+      , &NVPW_MetricsEvaluator_SetDeviceAttributes
+      , &NVPW_MetricsEvaluator_UserDefinedMetrics_Initialize
+      , &NVPW_MetricsEvaluator_UserDefinedMetrics_ExecuteScriptFromString
+      , &NVPW_MetricsEvaluator_UserDefinedMetrics_Commit
+      , &NVPW_MetricsEvaluator_UserDefinedMetrics_GetMetricNames
+      , &NVPW_CounterData_CalculateCounterDataImageCopySize
+      , &NVPW_CounterData_InitializeCounterDataImageCopy
+      , &NVPW_CounterData_ExtractCounterDataPrefix
+      , &NVPW_CounterDataCombiner_Create
+      , &NVPW_CounterDataCombiner_Destroy
+      , &NVPW_CounterDataCombiner_CreateRange
+      , &NVPW_CounterDataCombiner_CopyIntoRange
+      , &NVPW_CounterDataCombiner_AccumulateIntoRange
+      , &NVPW_CounterDataCombiner_SumIntoRange
+      , &NVPW_CounterDataCombiner_WeightedSumIntoRange
+      , &NVPW_CounterDataBuilder_Create
+      , &NVPW_CounterDataBuilder_Destroy
+      , &NVPW_CounterDataBuilder_AddMetrics
+      , &NVPW_CounterDataBuilder_AddRawCounters
+      , &NVPW_CounterDataBuilder_GetCounterDataPrefix
+      , &NVPW_InitializeTarget
+      , &NVPW_GetDeviceCount
+      , &NVPW_Device_GetNames
+      , &NVPW_Device_GetUUID
+      , &NVPW_Device_GetPciBusIds
+      , &NVPW_Device_GetMigAttributes
+      , &NVPW_Adapter_GetDeviceIndex
+      , &NVPW_CounterData_GetNumRanges
+      , &NVPW_CounterData_GetChipName
+      , &NVPW_Config_GetNumPasses_V2
+      , &NVPW_QueryVersionNumber
+      , &NVPW_Device_GetClockStatus
+      , &NVPW_Device_SetClockSetting
+      , &NVPW_ThrottlingDetector_GetState
+      , &NVPW_ThrottlingDetector_BeginSession
+      , &NVPW_ThrottlingDetector_Sample
+      , &NVPW_ThrottlingDetector_EndSession
+      , &NVPW_CounterData_GetRangeDescriptions
+      , &NVPW_Profiler_CounterData_GetRangeDescriptions
+      , &NVPW_PeriodicSampler_CounterData_GetSampleTime
+      , &NVPW_PeriodicSampler_CounterData_TrimInPlace
+      , &NVPW_PeriodicSampler_CounterData_GetInfo
+      , &NVPW_PeriodicSampler_CounterData_GetTriggerCount
+      , &NVPW_PeriodicSampler_CounterData_IsDataComplete
+      , &NVPW_Device_RawCounterConfig_Create
+      , &NVPW_Device_RawMetricsConfig_Create
+      , &NVPW_Device_MetricsEvaluator_CalculateScratchBufferSize
+      , &NVPW_Device_MetricsEvaluator_Initialize
+      , &NVPW_GPU_PeriodicSampler_IsGpuSupported
+      , &NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources
+      , &NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize
+      , &NVPW_GPU_PeriodicSampler_BeginSession
+      , &NVPW_GPU_PeriodicSampler_BeginSession_V2
+      , &NVPW_GPU_PeriodicSampler_EndSession
+      , &NVPW_GPU_PeriodicSampler_GetCounterAvailability
+      , &NVPW_GPU_PeriodicSampler_SetConfig
+      , &NVPW_GPU_PeriodicSampler_StartSampling
+      , &NVPW_GPU_PeriodicSampler_StopSampling
+      , &NVPW_GPU_PeriodicSampler_CpuTrigger
+      , &NVPW_GPU_PeriodicSampler_CounterDataImage_CalculateSize
+      , &NVPW_GPU_PeriodicSampler_CounterDataImage_Initialize
+      , &NVPW_GPU_PeriodicSampler_GetRecordBufferStatus
+      , &NVPW_GPU_PeriodicSampler_DecodeCounters
+      , &NVPW_GPU_PeriodicSampler_DecodeCounters_V2
+      , &NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported
+      , &NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_V2
+      , &NVPW_GPU_PeriodicSampler_GetGpuTimestamp
+      , &NVPW_GPU_PeriodicSampler_AcknowledgeRecordBuffer
+      , &NVPW_GPU_PeriodicSampler_SetRecordBufferReadOffset
+      , &NVPW_GPU_PeriodicSampler_DecodeCounters_V3
+      , &NVPW_GPU_PeriodicSampler_ResetDecoderState
+      , &NVPW_VK_RawCounterConfig_Create
+      , &NVPW_VK_RawMetricsConfig_Create
+      , &NVPW_VK_MetricsEvaluator_CalculateScratchBufferSize
+      , &NVPW_VK_MetricsEvaluator_Initialize
+      , &NVPW_VK_Profiler_CounterDataImage_CalculateSize
+      , &NVPW_VK_Profiler_CounterDataImage_Initialize
+      , &NVPW_VK_Profiler_CounterDataImage_CalculateScratchBufferSize
+      , &NVPW_VK_Profiler_CounterDataImage_InitializeScratchBuffer
+      , &NVPW_VK_LoadDriver
+      , &NVPW_VK_Device_GetDeviceIndex
+      , &NVPW_VK_Profiler_GetRequiredInstanceExtensions
+      , &NVPW_VK_Profiler_GetRequiredDeviceExtensions
+      , &NVPW_VK_Profiler_CalcTraceBufferSize
+      , &NVPW_VK_Profiler_Queue_BeginSession
+      , &NVPW_VK_Profiler_Queue_EndSession
+      , &NVPW_VK_Queue_ServicePendingGpuOperations
+      , &NVPW_VK_Profiler_Queue_SetConfig
+      , &NVPW_VK_Profiler_Queue_ClearConfig
+      , &NVPW_VK_Profiler_Queue_BeginPass
+      , &NVPW_VK_Profiler_Queue_EndPass
+      , &NVPW_VK_Profiler_CommandBuffer_PushRange
+      , &NVPW_VK_Profiler_CommandBuffer_PopRange
+      , &NVPW_VK_Profiler_Queue_DecodeCounters
+      , &NVPW_VK_Profiler_IsGpuSupported
+      , &NVPW_VK_Profiler_Queue_GetCounterAvailability
+      , &NVPW_VK_MiniTrace_IsGpuSupported
+      , &NVPW_VK_MiniTrace_DeviceState_Create
+      , &NVPW_VK_MiniTrace_DeviceState_Destroy
+      , &NVPW_VK_MiniTrace_Queue_Register
+      , &NVPW_VK_MiniTrace_Queue_Unregister
+      , &NVPW_VK_MiniTrace_CommandBuffer_FrontEndTrigger
+      , &NVPW_VK_MiniTrace_CommandBuffer_MarkerCpu
+      , &NVPW_VK_MiniTrace_CommandBuffer_HostTimestamp
+      , &NVPW_VKSC_RawCounterConfig_Create
+      , &NVPW_VKSC_RawMetricsConfig_Create
+      , &NVPW_VKSC_MetricsEvaluator_CalculateScratchBufferSize
+      , &NVPW_VKSC_MetricsEvaluator_Initialize
+      , &NVPW_VKSC_Profiler_CounterDataImage_CalculateSize
+      , &NVPW_VKSC_Profiler_CounterDataImage_Initialize
+      , &NVPW_VKSC_Profiler_CounterDataImage_CalculateScratchBufferSize
+      , &NVPW_VKSC_Profiler_CounterDataImage_InitializeScratchBuffer
+      , &NVPW_VKSC_LoadDriver
+      , &NVPW_VKSC_Device_GetDeviceIndex
+      , &NVPW_VKSC_Profiler_GetRequiredInstanceExtensions
+      , &NVPW_VKSC_Profiler_GetRequiredDeviceExtensions
+      , &NVPW_VKSC_Profiler_CalcTraceBufferSize
+      , &NVPW_VKSC_Profiler_CalcPerfmonBufferSize
+      , &NVPW_VKSC_Profiler_GetDeviceObjectReservation
+      , &NVPW_VKSC_Profiler_Queue_BeginSession
+      , &NVPW_VKSC_Profiler_Queue_EndSession
+      , &NVPW_VKSC_Profiler_Queue_ServicePendingGpuOperations
+      , &NVPW_VKSC_Profiler_Queue_SetConfig
+      , &NVPW_VKSC_Profiler_Queue_ClearConfig
+      , &NVPW_VKSC_Profiler_Queue_BeginPass
+      , &NVPW_VKSC_Profiler_Queue_EndPass
+      , &NVPW_VKSC_Profiler_CommandBuffer_PushRangeGraphics
+      , &NVPW_VKSC_Profiler_CommandBuffer_PopRangeGraphics
+      , &NVPW_VKSC_Profiler_CommandBuffer_PushRangeCompute
+      , &NVPW_VKSC_Profiler_CommandBuffer_PopRangeCompute
+      , &NVPW_VKSC_Profiler_Queue_InitializeRangeCommands
+      , &NVPW_VKSC_Profiler_Queue_DecodeCounters
+      , &NVPW_VKSC_Profiler_IsGpuSupported
+      , &NVPW_OpenGL_RawMetricsConfig_Create
+      , &NVPW_OpenGL_MetricsEvaluator_CalculateScratchBufferSize
+      , &NVPW_OpenGL_MetricsEvaluator_Initialize
+      , &NVPW_OpenGL_RawCounterConfig_Create
+      , &NVPW_OpenGL_LoadDriver
+      , &NVPW_OpenGL_GetCurrentGraphicsContext
+      , &NVPW_OpenGL_GraphicsContext_GetDeviceIndex
+      , &NVPW_OpenGL_Profiler_IsGpuSupported
+      , &NVPW_OpenGL_Profiler_CounterDataImage_CalculateSize
+      , &NVPW_OpenGL_Profiler_CounterDataImage_Initialize
+      , &NVPW_OpenGL_Profiler_CounterDataImage_CalculateScratchBufferSize
+      , &NVPW_OpenGL_Profiler_CounterDataImage_InitializeScratchBuffer
+      , &NVPW_OpenGL_Profiler_CalcTraceBufferSize
+      , &NVPW_OpenGL_Profiler_GraphicsContext_BeginSession
+      , &NVPW_OpenGL_Profiler_GraphicsContext_EndSession
+      , &NVPW_OpenGL_Profiler_GraphicsContext_SetConfig
+      , &NVPW_OpenGL_Profiler_GraphicsContext_ClearConfig
+      , &NVPW_OpenGL_Profiler_GraphicsContext_BeginPass
+      , &NVPW_OpenGL_Profiler_GraphicsContext_EndPass
+      , &NVPW_OpenGL_Profiler_GraphicsContext_PushRange
+      , &NVPW_OpenGL_Profiler_GraphicsContext_PopRange
+      , &NVPW_OpenGL_Profiler_GraphicsContext_DecodeCounters
+      , &NVPW_OpenGL_Profiler_GraphicsContext_GetCounterAvailability
+      , &NVPW_EGL_RawMetricsConfig_Create
+      , &NVPW_EGL_MetricsEvaluator_CalculateScratchBufferSize
+      , &NVPW_EGL_MetricsEvaluator_Initialize
+      , &NVPW_EGL_RawCounterConfig_Create
+      , &NVPW_EGL_LoadDriver
+      , &NVPW_EGL_GetCurrentGraphicsContext
+      , &NVPW_EGL_GraphicsContext_GetDeviceIndex
+      , &NVPW_EGL_Profiler_IsGpuSupported
+      , &NVPW_EGL_Profiler_CounterDataImage_CalculateSize
+      , &NVPW_EGL_Profiler_CounterDataImage_Initialize
+      , &NVPW_EGL_Profiler_CounterDataImage_CalculateScratchBufferSize
+      , &NVPW_EGL_Profiler_CounterDataImage_InitializeScratchBuffer
+      , &NVPW_EGL_Profiler_CalcTraceBufferSize
+      , &NVPW_EGL_Profiler_GraphicsContext_BeginSession
+      , &NVPW_EGL_Profiler_GraphicsContext_EndSession
+      , &NVPW_EGL_Profiler_GraphicsContext_SetConfig
+      , &NVPW_EGL_Profiler_GraphicsContext_ClearConfig
+      , &NVPW_EGL_Profiler_GraphicsContext_BeginPass
+      , &NVPW_EGL_Profiler_GraphicsContext_EndPass
+      , &NVPW_EGL_Profiler_GraphicsContext_PushRange
+      , &NVPW_EGL_Profiler_GraphicsContext_PopRange
+      , &NVPW_EGL_Profiler_GraphicsContext_DecodeCounters
+      , &NVPW_EGL_Profiler_GraphicsContext_GetCounterAvailability
+};
+#endif
+NVPERF_HOST_IMPL_FN void* NVPERF_HOST_IMPL_LibOpen(char const* name)
+{
+    int flags = RTLD_NOW | RTLD_GLOBAL;
+#ifdef RTLD_DEEPBIND
+    flags |= RTLD_DEEPBIND;
+#endif
+    return dlopen(name, flags);
+}
+
+NVPERF_HOST_IMPL_FN NVPA_GenericFn NVPERF_HOST_IMPL_LibSym(void* module, char const* name)
+{
+    return (NVPA_GenericFn)dlsym(module, name);
+}
+
+#if !defined(NVPERF_HOST_IMPL_LIBRARY_NAME)
+    #define NVPERF_HOST_IMPL_LIBRARY_NAME "libnvperf_grfx_host.so"
+    #define NVPERF_HOST_IMPL_UNDEF_LIBRARY_NAME 1
+#endif
+
+NVPERF_HOST_IMPL_FN void* NVPERF_HOST_IMPL_LoadNvPerfLibrary(void)
+{
+    char const* const pLibName = NVPERF_HOST_IMPL_LIBRARY_NAME;
+    const size_t libNameLength = strlen(pLibName);
+    NVPERF_HOST_IMPL_Module* pModule = NVPERF_HOST_IMPL_GetModule();
+
+    if (pModule->numSearchPaths == 0)
+    {
+        /* Load from default paths */
+        void* hPerfworks = NVPERF_HOST_IMPL_LibOpen(pLibName);
+        if (hPerfworks)
+        {
+            return hPerfworks;
+        }
+    }
+    else
+    {
+        size_t pathIndex = 0;
+        size_t libPathLength = 0;
+        char* pLibFullName = 0;
+        void* hPerfworks = 0;
+        const size_t MaxLibPathLength = 4096;
+
+        for (pathIndex = 0; pathIndex < pModule->numSearchPaths; ++pathIndex)
+        {
+            const void* pEnd;
+
+            if (!pModule->ppSearchPaths[pathIndex])
+            {
+                continue;
+            }
+
+            pEnd = memchr(pModule->ppSearchPaths[pathIndex], '\0', MaxLibPathLength);
+            if (!pEnd)
+            {
+                continue;
+            }
+            libPathLength = (const char*)pEnd - pModule->ppSearchPaths[pathIndex];
+
+            pLibFullName = (char*)malloc(libNameLength + libPathLength + 2);
+            if (!pLibFullName)
+            {
+                continue;
+            }
+
+            strncpy(pLibFullName, pModule->ppSearchPaths[pathIndex], libPathLength);
+            pLibFullName[libPathLength] = '/';
+
+            strncpy(pLibFullName + libPathLength + 1, pLibName, libNameLength + 1);
+            pLibFullName[libPathLength + libNameLength + 1] = '\0';
+
+            hPerfworks = NVPERF_HOST_IMPL_LibOpen(pLibFullName);
+            free(pLibFullName);
+            if (hPerfworks)
+            {
+                return hPerfworks;
+            }
+        }
+    }
+    return 0;
+}
+
+/* Returns 0 on failure, 1 on success. */
+NVPERF_HOST_IMPL_FN int NVPERF_HOST_IMPL_InitNvPerf(void)
+{
+    NVPERF_HOST_IMPL_Module* pModule = NVPERF_HOST_IMPL_GetModule();
+
+    if (!pModule->hModNvPerf)
+    {
+        pModule->hModNvPerf = NVPERF_HOST_IMPL_LoadNvPerfLibrary();
+        if (!pModule->hModNvPerf)
+        {
+            pModule->defaultStatus = NVPA_STATUS_NOT_LOADED;
+            return 0;
+        }
+    }
+
+    pModule->defaultStatus = NVPA_STATUS_FUNCTION_NOT_FOUND;
+    pModule->nvPerfGetProcAddress = (NVPERF_HOST_IMPL_NVPA_GetProcAddress_Fn)NVPERF_HOST_IMPL_LibSym(pModule->hModNvPerf, "NVPA_GetProcAddress");
+    if (!pModule->nvPerfGetProcAddress)
+    {
+        return 0;
+    }
+    
+
+    NVPERF_HOST_IMPL_InitNvPerfProcs();
+    return 1;
+}
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2018-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+NVPERF_HOST_IMPL_FN NVPA_GenericFn NVPERF_HOST_IMPL_GetNvPerfProc(char const* pName, NVPA_GenericFn pDefault)
+{
+    NVPA_GenericFn pProc = NVPERF_HOST_IMPL_GetModule()->nvPerfGetProcAddress(pName);
+    if (pProc)
+    {
+        return pProc;
+    }
+    return pDefault;
+}
+
+NVPERF_HOST_IMPL_FN void NVPERF_HOST_IMPL_FreeSearchPaths(void)
+{
+    NVPERF_HOST_IMPL_Module* pModule = NVPERF_HOST_IMPL_GetModule();
+    if (pModule->ppSearchPaths)
+    {
+        size_t index;
+        for (index = 0; index < pModule->numSearchPaths; ++index)
+        {
+            free(pModule->ppSearchPaths[index]);
+        }
+        free(pModule->ppSearchPaths);
+        pModule->ppSearchPaths = NULL;
+        pModule->numSearchPaths = 0;
+    }
+}
+
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPaths_Default(NVPW_SetLibraryLoadPaths_Params* pParams)
+{
+    const size_t MaxLibPathLength = 4096;
+    NVPERF_HOST_IMPL_Module* pModule = NVPERF_HOST_IMPL_GetModule();
+    size_t index;
+
+    /* free the old paths */
+    NVPERF_HOST_IMPL_FreeSearchPaths();
+
+    if (pParams->numPaths == 0 || pParams->ppPaths == NULL)
+    {
+        return NVPA_STATUS_SUCCESS;
+    }
+
+    #ifdef _MSC_VER
+    #pragma warning( push )
+    #pragma warning( disable : 6385 )
+    #endif
+
+    pModule->numSearchPaths = pParams->numPaths;
+    pModule->ppSearchPaths = (NVPERF_HOST_IMPL_PathChar**)malloc(pParams->numPaths * sizeof(NVPERF_HOST_IMPL_PathChar*));
+    if (!pModule->ppSearchPaths)
+    {
+        return NVPA_STATUS_OUT_OF_MEMORY;
+    }
+    memset(pModule->ppSearchPaths, 0, pParams->numPaths * sizeof(NVPERF_HOST_IMPL_PathChar*));
+
+    for (index = 0; index < pParams->numPaths; ++index)
+    {
+        const void* pEnd;
+        size_t len;
+#if defined(_WIN32)
+        size_t numConverted;
+#endif
+
+        pEnd = memchr(pParams->ppPaths[index], '\0', MaxLibPathLength);
+        if (!pEnd)
+        {
+            return NVPA_STATUS_INVALID_ARGUMENT;
+        }
+        len = (const char*)pEnd - pParams->ppPaths[index] + 1;
+
+        pModule->ppSearchPaths[index] = (NVPERF_HOST_IMPL_PathChar*)malloc((len) * sizeof(NVPERF_HOST_IMPL_PathChar));
+        if (!pModule->ppSearchPaths[index])
+        {
+            return NVPA_STATUS_OUT_OF_MEMORY;
+        }
+#if defined(_WIN32)
+        mbstowcs_s(&numConverted, pModule->ppSearchPaths[index], len, pParams->ppPaths[index], len);
+#else
+        strncpy(pModule->ppSearchPaths[index], pParams->ppPaths[index], len);
+#endif
+    }
+
+    #ifdef _MSC_VER
+    #pragma warning( pop )
+    #endif
+
+    return NVPA_STATUS_SUCCESS;
+}
+
+NVPERF_HOST_IMPL_FN NVPA_Status NVPERF_HOST_IMPL_NVPW_SetLibraryLoadPathsW_Default(NVPW_SetLibraryLoadPathsW_Params* pParams)
+{
+    NVPERF_HOST_IMPL_Module* pModule = NVPERF_HOST_IMPL_GetModule();
+    size_t index;
+
+    /* free the old paths */
+    NVPERF_HOST_IMPL_FreeSearchPaths();
+
+    if (pParams->numPaths == 0 || pParams->ppwPaths == NULL)
+    {
+        return NVPA_STATUS_SUCCESS;
+    }
+
+    #ifdef _MSC_VER
+    #pragma warning( push )
+    #pragma warning( disable : 6385 )
+    #endif
+
+    pModule->numSearchPaths = pParams->numPaths;
+    pModule->ppSearchPaths = (NVPERF_HOST_IMPL_PathChar**)malloc(pParams->numPaths * sizeof(NVPERF_HOST_IMPL_PathChar*));
+    if (!pModule->ppSearchPaths)
+    {
+        return NVPA_STATUS_OUT_OF_MEMORY;
+    }
+    memset(pModule->ppSearchPaths, 0, pParams->numPaths * sizeof(NVPERF_HOST_IMPL_PathChar*));
+
+    for (index = 0; index < pParams->numPaths; ++index)
+    {
+        /* calculate the length of the dest */
+#if defined(_WIN32)
+        size_t len = wcslen(pParams->ppwPaths[index]) + 1;
+#else
+        size_t len = wcstombs(NULL, pParams->ppwPaths[index], 0) + 1;
+#endif
+        /* allocate the dest buffer */
+        pModule->ppSearchPaths[index] = (NVPERF_HOST_IMPL_PathChar*)malloc((len) * sizeof(NVPERF_HOST_IMPL_PathChar));
+        if (!pModule->ppSearchPaths[index])
+        {
+            return NVPA_STATUS_OUT_OF_MEMORY;
+        }
+        /* copy/convert the source to dest */
+#if defined(_WIN32)
+        wcsncpy_s(pModule->ppSearchPaths[index], len, pParams->ppwPaths[index], len);
+#else
+        wcstombs(pModule->ppSearchPaths[index], pParams->ppwPaths[index], len);
+#endif
+    }
+
+    #ifdef _MSC_VER
+    #pragma warning( pop )
+    #endif
+
+    return NVPA_STATUS_SUCCESS;
+}
+
+#if !defined(NVPERF_HOST_IMPL_DISABLE_LEGACY_NAMES) && !defined(NVPERF_STUB_LEGACY_NAMES_DEFINED)
+#define NVPERF_STUB_LEGACY_NAMES_DEFINED 1
+
+#if defined(__cplusplus)
+    #define NVPERF_HOST_IMPL_LEGACY_FN static inline
+#elif defined(_MSC_VER)
+    #define NVPERF_HOST_IMPL_LEGACY_FN static __inline
+#elif defined(__GNUC__)
+    #define NVPERF_HOST_IMPL_LEGACY_FN static __inline__
+#else
+    #define NVPERF_HOST_IMPL_LEGACY_FN static
+#endif
+
+typedef NVPERF_HOST_IMPL_NVPA_GetProcAddress_Fn NVPA_GetProcAddress_Fn;
+typedef NVPERF_HOST_IMPL_ApiFunctions           NvPerfApi;
+typedef NVPERF_HOST_IMPL_Module                 NVPW_User_Api;
+typedef NVPERF_HOST_IMPL_PathChar               NVPW_User_PathCharType;
+
+#define g_api           (*NVPERF_HOST_IMPL_GetModule())
+#define g_defaultStatus (NVPERF_HOST_IMPL_GetModule()->defaultStatus)
+
+NVPERF_HOST_IMPL_LEGACY_FN NVPA_GenericFn LibSym(void* module, char const* name)
+{
+    return NVPERF_HOST_IMPL_LibSym(module, name);
+}
+
+NVPERF_HOST_IMPL_LEGACY_FN NVPA_GenericFn GetNvPerfProc(char const* pName, NVPA_GenericFn pDefault)
+{
+    return NVPERF_HOST_IMPL_GetNvPerfProc(pName, pDefault);
+}
+
+NVPERF_HOST_IMPL_LEGACY_FN void* LoadNvPerfLibrary(void)
+{
+    return NVPERF_HOST_IMPL_LoadNvPerfLibrary();
+}
+
+NVPERF_HOST_IMPL_LEGACY_FN int InitNvPerf(void)
+{
+    return NVPERF_HOST_IMPL_InitNvPerf();
+}
+
+NVPERF_HOST_IMPL_LEGACY_FN void InitNvPerfProcs(void)
+{
+    NVPERF_HOST_IMPL_InitNvPerfProcs();
+}
+
+#undef NVPERF_HOST_IMPL_LEGACY_FN
+#endif
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+#if NVPERF_HOST_IMPL_HIDE_SYMBOLS
+    #pragma GCC visibility pop
+#endif
+
+#undef NVPERF_HOST_IMPL_FN
+#undef NVPERF_HOST_IMPL_FN_EMITTED_IF_USED
+#undef NVPERF_HOST_IMPL_DATA
+#undef NVPERF_HOST_IMPL_DATA_LINK_ONCE
+#undef NVPERF_HOST_IMPL_API_ALREADY_EXPORTED
+#undef NVPERF_HOST_IMPL_API_VISIBILITY
+#undef NVPERF_HOST_IMPL_MODULE_INITIALIZER
+
+#if defined(NVPERF_HOST_IMPL_UNDEF_HIDE_SYMBOLS)
+    #undef NVPERF_HOST_IMPL_HIDE_SYMBOLS
+    #undef NVPERF_HOST_IMPL_UNDEF_HIDE_SYMBOLS
+#endif
+
+#if defined(NVPERF_HOST_IMPL_UNDEF_LIBRARY_NAME)
+    #undef NVPERF_HOST_IMPL_LIBRARY_NAME
+    #undef NVPERF_HOST_IMPL_UNDEF_LIBRARY_NAME
+#endif
+
+#endif /* NVPERF_HOST_IMPL_H */
